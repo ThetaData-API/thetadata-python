@@ -1,5 +1,5 @@
 
-<title>Intro</title>
+Intro
 
 Theta Data API offers a low latency approach to retrieving historical options data. 
 All APIs are designed without compromising simplicity, performance, or customization. 
