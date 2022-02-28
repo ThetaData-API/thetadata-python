@@ -77,9 +77,9 @@ class ThetaClient(threading.Thread):
         while brackets > 0:
             t = self.server.recv(1).decode("utf-8")
             if t.__eq__("{"):
-                brackets = brackets + 1
+                brackets += 1
             elif t.__eq__("}"):
-                brackets = brackets - 1
+                brackets -= 1
             data.append(t)
         return json.JSONDecoder.decode(JSONDecoder(), ''.join(data))
 
@@ -149,7 +149,6 @@ class ThetaClient(threading.Thread):
             out.append("&" + ReqArg.START_DATE.name + "=" + start)
         if end is not None:
             out.append("&" + ReqArg.END_DATE.name + "=" + dur)
-        print(''.join(out))
         return self.get(self.req(MessageType.HIST, ''.join(out)))
 
     # NON-BLOCKING HISTORICAL DATA
@@ -187,7 +186,6 @@ class ThetaClient(threading.Thread):
             out.append("&" + ReqArg.START_DATE.name + "=" + start)
         if end is not None:
             out.append("&" + ReqArg.END_DATE.name + "=" + dur)
-        print(''.join(out))
         return self.req(MessageType.HIST, ''.join(out))
 
     # CACHE RETRIEVAL
@@ -220,7 +218,7 @@ class ThetaClient(threading.Thread):
         :return: All expirations that Theta Data provides data for (YYYYMMDD) or None is the request timed out.
         :raises RequestException: If an error occurred while processing the request.
         """
-        req_id = self.req(MessageType.ALL_STRIKES, ReqArg.ROOT + "=" + root)
+        req_id = self.req(MessageType.ALL_EXPIRATIONS, ReqArg.ROOT + "=" + root)
         return self.get(req_id)
 
     def req_get_all_strikes(self, root: str, exp: str):
