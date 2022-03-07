@@ -31,7 +31,7 @@ class MessageType(Enum):
     ALL_EXPIRATIONS = 201
     ALL_STRIKES = 202
     HIST_END = 203
-
+    LAST_QUOTE = 204
     #
     # Experimental
     #
