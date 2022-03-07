@@ -5,7 +5,8 @@ if __name__ == "__main__":
     client = ThetaClient()
     client.connect()
 
-    reqId = client.req_hist_opts(ReqType.QUOTE, "AMD", "20220520", 150, "C", 5, 0)
-    data = client.get(reqId)
-    for i in range(20):
-        print("test: " + str(data[i]))
+    #reqId = client.req_hist_opts(ReqType.QUOTE, "AMD", "20220520", 150, "C", 5, 900)
+    #data = client.get(reqId)
+    #for i in range(20):
+    #    print("test: " + str(data[i]))
+    print(client.req_get_last_quote("AAPL", "20220318", 165, 'C'))

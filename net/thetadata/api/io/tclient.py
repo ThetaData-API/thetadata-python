@@ -93,7 +93,7 @@ class ThetaClient(threading.Thread):
         if msg == MessageType.PING:
             self.ping()
         elif msg == MessageType.ALL_STRIKES:
-            values = msg["payload"].split(",")
+            values = msg["PAYLOAD"].split(",")
             strikes = []
 
             for s in values:
@@ -101,13 +101,13 @@ class ThetaClient(threading.Thread):
 
             self.data[req] = strikes
         elif msg == MessageType.ALL_EXPIRATIONS:
-            self.data[req] = msg["payload"].split(",")
+            self.data[req] = msg["PAYLOAD"].split(",")
         elif msg == MessageType.ERROR:
-            self.data[req] = RequestException(cb["payload"])
-            self.on_err(req, RequestException(cb["payload"]))
-        elif msg == MessageType.HIST:
-            self.data[req] = cb["payload"]
-            self.on_historical_bars(req, cb["payload"])
+            self.data[req] = RequestException(cb["PAYLOAD"])
+            self.on_err(req, RequestException(cb["PAYLOAD"]))
+        elif msg == MessageType.HIST or msg == MessageType.LAST_QUOTE:
+            self.data[req] = cb["PAYLOAD"]
+            self.on_historical_bars(req, cb["PAYLOAD"])
         elif msg == MessageType.DISCONNECTED:
             self.on_disconnect()
         elif msg == MessageType.RECONNECTED:
@@ -232,6 +232,14 @@ class ThetaClient(threading.Thread):
         :raises RequestException: If an error occurred while processing the request.
         """
         req_id = self.req(MessageType.ALL_STRIKES, ReqArg.ROOT + "=" + root + "&" + ReqArg.EXPIRATION + "=" + exp)
+        return self.get(req_id)
+
+    # Live Data
+
+    def req_get_last_quote(self, root: str, exp: str, strike: decimal, right: chr):
+        req_id = self.req(MessageType.LAST_QUOTE, ReqArg.SEC_TYPE.name + "=" + "OPTION" + "&" +
+                          ReqArg.ROOT.name + "=" + root + "&" + ReqArg.EXPIRATION.name + "=" + exp + "&" +
+                          ReqArg.STRIKE.name + "=" + str(strike) + "&" + ReqArg.RIGHT.name + "=" + right)
         return self.get(req_id)
 
     # LOW LEVEL IO
