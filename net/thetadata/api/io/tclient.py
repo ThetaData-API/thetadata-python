@@ -237,6 +237,17 @@ class ThetaClient(threading.Thread):
     # Live Data
 
     def req_get_last_opt_quote(self, root: str, exp: str, strike: decimal, right: chr):
+        """
+        Returns the last quote on record for a specified option.
+
+        :param root:     The root symbol.
+        :param exp:      The expiration date formatted as YYYYMMDD.
+        :param strike:   The strike.
+        :param right:    'C' for call; 'P' for put.
+        :return: The last quote on record.
+        :raises RequestException: If an error occurred while processing the request.
+        """
+
         req_id = self.req(MessageType.LAST_QUOTE, ReqArg.SEC_TYPE.name + "=" + "OPTION" + "&" +
                           ReqArg.ROOT.name + "=" + root + "&" + ReqArg.EXPIRATION.name + "=" + exp + "&" +
                           ReqArg.STRIKE.name + "=" + str(strike) + "&" + ReqArg.RIGHT.name + "=" + right)
