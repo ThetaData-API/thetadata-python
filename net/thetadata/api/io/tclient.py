@@ -236,7 +236,7 @@ class ThetaClient(threading.Thread):
 
     # Live Data
 
-    def req_get_last_quote(self, root: str, exp: str, strike: decimal, right: chr):
+    def req_get_last_opt_quote(self, root: str, exp: str, strike: decimal, right: chr):
         req_id = self.req(MessageType.LAST_QUOTE, ReqArg.SEC_TYPE.name + "=" + "OPTION" + "&" +
                           ReqArg.ROOT.name + "=" + root + "&" + ReqArg.EXPIRATION.name + "=" + exp + "&" +
                           ReqArg.STRIKE.name + "=" + str(strike) + "&" + ReqArg.RIGHT.name + "=" + right)

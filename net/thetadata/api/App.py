@@ -9,4 +9,4 @@ if __name__ == "__main__":
     #data = client.get(reqId)
     #for i in range(20):
     #    print("test: " + str(data[i]))
-    print(client.req_get_last_quote("AAPL", "20220318", 165, 'C'))
+    print(client.req_get_last_opt_quote("AAPL", "20220318", 165, 'C'))
