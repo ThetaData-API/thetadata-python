@@ -218,7 +218,7 @@ class ThetaClient(threading.Thread):
         :return: All expirations that Theta Data provides data for (YYYYMMDD) or None is the request timed out.
         :raises RequestException: If an error occurred while processing the request.
         """
-        req_id = self.req(MessageType.ALL_EXPIRATIONS, ReqArg.ROOT + "=" + root)
+        req_id = self.req(MessageType.ALL_EXPIRATIONS, ReqArg.ROOT.name + "=" + root)
         return self.get(req_id)
 
     def req_get_all_strikes(self, root: str, exp: str):
@@ -231,7 +231,8 @@ class ThetaClient(threading.Thread):
         :return: The strike prices on the expiration or None is the request timed out.
         :raises RequestException: If an error occurred while processing the request.
         """
-        req_id = self.req(MessageType.ALL_STRIKES, ReqArg.ROOT + "=" + root + "&" + ReqArg.EXPIRATION + "=" + exp)
+        req_id = self.req(MessageType.ALL_STRIKES,
+                          ReqArg.ROOT.name + "=" + root + "&" + ReqArg.EXPIRATION.name + "=" + exp)
         return self.get(req_id)
 
     # Live Data
