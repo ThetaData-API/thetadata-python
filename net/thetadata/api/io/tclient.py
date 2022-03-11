@@ -93,7 +93,7 @@ class ThetaClient(threading.Thread):
         if msg == MessageType.PING:
             self.ping()
         elif msg == MessageType.ALL_STRIKES:
-            values = msg["PAYLOAD"].split(",")
+            values = cb["PAYLOAD"].split(",")
             strikes = []
 
             for s in values:
@@ -101,7 +101,7 @@ class ThetaClient(threading.Thread):
 
             self.data[req] = strikes
         elif msg == MessageType.ALL_EXPIRATIONS:
-            self.data[req] = msg["PAYLOAD"].split(",")
+            self.data[req] = cb["PAYLOAD"].split(",")
         elif msg == MessageType.ERROR:
             self.data[req] = RequestException(cb["PAYLOAD"])
             self.on_err(req, RequestException(cb["PAYLOAD"]))
