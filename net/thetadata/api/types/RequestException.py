@@ -1,4 +1,3 @@
 class RequestException(Exception):
-
     def __init__(self, msg):
-        super(msg)
+        super().__init__(msg)
