@@ -2,6 +2,10 @@ from enum import Enum
 
 
 class ReqType(Enum):
+
+    # FREE
+    EOD = 1
+
     # VALUE
     DEFAULT = 100
     QUOTE = 101
