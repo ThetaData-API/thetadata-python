@@ -296,7 +296,7 @@ class ThetaClient(threading.Thread):
         :param req_id: The original request id.
         :param err: The error.
         """
-        print("ERROR: reqId: " + req_id + " message: " + err)
+        print("ERROR: reqId: " + str(req_id) + " message: " + str(err))
 
     def on_disconnect(self):
         """

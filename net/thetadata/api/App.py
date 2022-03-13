@@ -5,8 +5,19 @@ if __name__ == "__main__":
     client = ThetaClient()
     client.connect()
 
-    #reqId = client.req_hist_opts(ReqType.QUOTE, "AMD", "20220520", 150, "C", 5, 900)
-    #data = client.get(reqId)
-    #for i in range(20):
-    #    print("test: " + str(data[i]))
-    print(client.req_get_all_expirations("AAPL"))
+    sym = 'SPCE'
+    exp = '20220318'
+    strike = 90
+    interval = 60
+    dur = 3
+
+    ohlc = client.req_get_hist_opts(ReqType.OHLC, sym, exp, strike, 'C', interval, dur)
+    quote = client.req_get_hist_opts(ReqType.QUOTE, sym, exp, strike, 'C', interval, dur)
+    vol = client.req_get_hist_opts(ReqType.VOLUME, sym, exp, strike, 'C', interval, dur)
+    # iv = client.req_get_hist_opts(ReqType.IMPLIED_VOLATILITY, sym, exp, strike, 'C', interval, dur)
+
+    print(ohlc)
+    print(quote)
+    print(vol)
+    # print(iv)
+
