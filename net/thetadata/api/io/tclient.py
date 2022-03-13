@@ -39,7 +39,7 @@ class ThetaClient(threading.Thread):
     returned by the "req" method.
 
     :author: Bailey Danseglio
-    :version: 2.0.2
+    :version: 2.0.4
     :since: 1/15/2022
     """
 
