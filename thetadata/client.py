@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from functools import wraps
 from datetime import datetime, date
 import socket
+import pandas as pd
+from pandas.core.frame import DataFrame
 
 from .models import (
     OptionReqType,
@@ -65,7 +67,7 @@ class ThetaClient:
         right: OptionRight,
         interval: int,
         date_range: DateRange,
-    ) -> HistOptionResponse:
+    ) -> DataFrame:
         """
         Send a historical option data request.
 
@@ -77,8 +79,7 @@ class ThetaClient:
         :param interval:    Interval size in minutes.
         :param date_range:  The dates to fetch.
 
-        :return:            The requested data.
-        :raises RequestException: If request could not be completed.
+        :return:            The requested data as a pandas DataFrame.
         """
         # format data
         assert self.server is not None, _NOT_CONNECTED_MSG
@@ -108,8 +109,4 @@ class ThetaClient:
         # parse response body
         body: Body = Body.parse(header, body_data)
 
-        print(f"{body.format=}")
-        print(f"{len(body.ticks)=}")
-        print(f"{body.ticks[0]=}")
-        assert False
-        return HistOptionResponse()
+        return body.ticks

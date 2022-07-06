@@ -2,6 +2,7 @@
 import pytest
 import datetime
 from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
+from pandas.core.frame import DataFrame
 
 
 @pytest.fixture
@@ -21,4 +22,10 @@ def test_hist_options(tc: ThetaClient):
     right = OptionRight.CALL
     interval = 100
     date_range = DateRange.from_days(100)
-    tc.get_hist_option(req, root, exp, strike, right, interval, date_range)
+    res = tc.get_hist_option(
+        req, root, exp, strike, right, interval, date_range
+    )
+    print(res)
+    print(res.columns)
+    assert isinstance(res, DataFrame)
+    assert len(res) > 0
