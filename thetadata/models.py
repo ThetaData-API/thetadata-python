@@ -6,6 +6,8 @@ from datetime import datetime, timedelta, date
 # from pydantic.dataclasses import dataclass
 from dataclasses import dataclass
 import enum
+import pandas as pd
+from pandas.core.frame import DataFrame
 
 
 class EnumParseError(Exception):
@@ -281,12 +283,14 @@ class Header:
         )
 
 
-@dataclass
 class Body:
     """Represents the body returned on every Terminal call."""
 
-    format: list[DataType]  # format tick
-    ticks: list[Tick]  # body ticks
+    def __init__(self, ticks: DataFrame):
+        assert isinstance(
+            ticks, DataFrame
+        ), "Cannot initialize body bc ticks is not a DataFrame"
+        self.ticks: DataFrame = ticks
 
     @classmethod
     def parse(cls, header: Header, data: bytes) -> Header:
@@ -315,8 +319,10 @@ class Body:
             map(lambda code: DataType.from_code(code), format_tick_codes)
         )
 
+        # initialize empty dataframe w/ format columns
+        df = pd.DataFrame(columns=format)
+
         # parse the rest of the ticks
-        ticks = []
         for tn in range(1, n_ticks):
             tick_offset = tn * bytes_per_tick * 4
             tick = []
@@ -325,6 +331,10 @@ class Body:
                 int_offset = tick_offset + b * 4
                 int_ = parse_int(data[int_offset : int_offset + 4])
                 tick.append(int_)
-            ticks.append(tick)
+            # add tick to dataframe
+            df = pd.concat(
+                [pd.DataFrame([tick], columns=df.columns), df],
+                ignore_index=True,
+            )
 
-        return cls(format=format, ticks=ticks)
+        return cls(ticks=df)
