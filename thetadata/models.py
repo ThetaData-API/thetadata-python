@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Any
 from datetime import datetime, timedelta, date
+from tqdm import tqdm
 
 # from pydantic.dataclasses import dataclass
 from dataclasses import dataclass
@@ -293,11 +294,14 @@ class Body:
         self.ticks: DataFrame = ticks
 
     @classmethod
-    def parse(cls, header: Header, data: bytes) -> Header:
+    def parse(
+        cls, header: Header, data: bytes, progress_bar: bool = False
+    ) -> Header:
         """Parse binary body data into an object.
 
         :param header: parsed header data
         :param data: the binary response body
+        :param: progress_bar: Print a progress bar displaying progress.
         """
         assert (
             len(data) == header.size
@@ -323,7 +327,10 @@ class Body:
         df = pd.DataFrame(columns=format)
 
         # parse the rest of the ticks
-        for tn in range(1, n_ticks):
+        ticks = []
+        for tn in tqdm(
+            range(1, n_ticks), desc="Processing", disable=not progress_bar
+        ):
             tick_offset = tn * bytes_per_tick * 4
             tick = []
             for b in range(bytes_per_tick):
@@ -331,10 +338,11 @@ class Body:
                 int_offset = tick_offset + b * 4
                 int_ = parse_int(data[int_offset : int_offset + 4])
                 tick.append(int_)
-            # add tick to dataframe
-            df = pd.concat(
-                [pd.DataFrame([tick], columns=df.columns), df],
-                ignore_index=True,
-            )
+            ticks.append(tick)
+        # add ticks to dataframe in a single concat
+        df = pd.concat(
+            [pd.DataFrame(ticks, columns=df.columns), df],
+            ignore_index=True,
+        )
 
         return cls(ticks=df)

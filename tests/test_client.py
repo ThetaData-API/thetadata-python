@@ -15,15 +15,15 @@ def tc():
 
 def test_hist_options(tc: ThetaClient):
     """Test a historical option request."""
-    req = OptionReqType.QUOTE
-    root = "BDX"
-    exp = datetime.date(2022, 7, 1)
-    strike = 240000
-    right = OptionRight.CALL
-    interval = 100
-    date_range = DateRange.from_days(100)
     res = tc.get_hist_option(
-        req, root, exp, strike, right, interval, date_range
+        req=OptionReqType.QUOTE,
+        root="BDX",
+        exp=datetime.date(2022, 7, 1),
+        strike=240000,
+        right=OptionRight.CALL,
+        interval=100,
+        date_range=DateRange.from_days(100),
+        progress_bar=True,
     )
     print(res)
     print(res.columns)
