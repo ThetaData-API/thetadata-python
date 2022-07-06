@@ -15,10 +15,6 @@ def _format_dt(dt: datetime) -> str:
     return dt.strftime("%Y%m%d")
 
 
-class PingResponse:
-    """The deserialized response from a ping request."""
-
-
 class HistOptionResponse:
     """The deserialized response from a historical option request."""
 
@@ -51,17 +47,6 @@ class ThetaClient:
             yield
         finally:
             self.server.close()
-
-    def ping(self) -> Optional[PingResponse]:
-        """Ping the Terminal."""
-        assert self.server is not None, _NOT_CONNECTED_MSG
-        ping_msg = f"ID=-1&MSG_CODE={MessageType.PING.value}"
-        self.server.sendall(ping_msg.encode("utf-8"))
-        header = Header.parse(self.server.recv(20))
-        body = self.server.recv(header.size)
-        print(header)
-        print(body.decode("utf-8"))
-        return PingResponse()
 
     def get_hist_option(
         self,
