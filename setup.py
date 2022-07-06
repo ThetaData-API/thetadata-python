@@ -5,5 +5,5 @@ setup(
     name="thetadata",
     packages=["thetadata"],
     include_package_data=True,
-    install_requires=["pydantic", "pandas"],
+    install_requires=["pydantic", "pandas", "tqdm"],
 )

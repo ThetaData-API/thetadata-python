@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from functools import wraps
 from datetime import datetime, date
 import socket
+from tqdm import tqdm
 import pandas as pd
 from pandas.core.frame import DataFrame
 
@@ -67,19 +68,21 @@ class ThetaClient:
         right: OptionRight,
         interval: int,
         date_range: DateRange,
+        progress_bar: bool = False,
     ) -> DataFrame:
         """
         Send a historical option data request.
 
-        :param req:         The request type.
-        :param root:        The root symbol.
-        :param exp:         The expiration date. Associated time is ignored.
-        :param strike:      The strike price in United States cents.
-        :param right:       The right of an option.
-        :param interval:    Interval size in minutes.
-        :param date_range:  The dates to fetch.
+        :param req:           The request type.
+        :param root:          The root symbol.
+        :param exp:           The expiration date. Associated time is ignored.
+        :param strike:        The strike price in United States cents.
+        :param right:         The right of an option.
+        :param interval:      Interval size in minutes.
+        :param date_range:    The dates to fetch.
+        :param: progress_bar: Print a progress bar displaying download progress.
 
-        :return:            The requested data as a pandas DataFrame.
+        :return:              The requested data as a pandas DataFrame.
         """
         # format data
         assert self.server is not None, _NOT_CONNECTED_MSG
@@ -99,14 +102,15 @@ class ThetaClient:
         # receive body data in parts
         BUFF_SIZE = 4096  # 4 KiB recommended for most machines
         body_data = b""
-        while True:
+        for _ in tqdm(
+            range(0, header.size, BUFF_SIZE),
+            desc="Downloading",
+            disable=not progress_bar,
+        ):
             part = self.server.recv(BUFF_SIZE)
             body_data += part
-            if len(part) < BUFF_SIZE:
-                # either 0 or end of data
-                break
 
         # parse response body
-        body: Body = Body.parse(header, body_data)
+        body: Body = Body.parse(header, body_data, progress_bar=progress_bar)
 
         return body.ticks
