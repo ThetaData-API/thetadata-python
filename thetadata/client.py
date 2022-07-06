@@ -2,10 +2,18 @@
 from typing import Optional, Callable
 from contextlib import contextmanager
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 import socket
 
-from .models import OptionReqType, OptionRight, DateRange, Header, MessageType
+from .models import (
+    OptionReqType,
+    OptionRight,
+    DateRange,
+    Header,
+    Body,
+    MessageType,
+    SecType,
+)
 
 _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 
@@ -41,7 +49,7 @@ class ThetaClient:
         :raises TimeoutError: If the timeout is set and has been reached.
         """
         try:
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server = socket.socket()
             self.server.connect(("localhost", self.port))
             self.server.settimeout(self.timeout)
             yield
@@ -52,12 +60,12 @@ class ThetaClient:
         self,
         req: OptionReqType,
         root: str,
-        exp: datetime,
+        exp: date,
         strike: int,
         right: OptionRight,
         interval: int,
         date_range: DateRange,
-    ) -> Optional[HistOptionResponse]:
+    ) -> HistOptionResponse:
         """
         Send a historical option data request.
 
@@ -68,11 +76,40 @@ class ThetaClient:
         :param right:       The right of an option.
         :param interval:    Interval size in minutes.
         :param date_range:  The dates to fetch.
-        :return: The requested data or None if the request timed out.
+
+        :return:            The requested data.
         :raises RequestException: If request could not be completed.
         """
+        # format data
         assert self.server is not None, _NOT_CONNECTED_MSG
         exp_fmt = _format_dt(exp)
         start_fmt = _format_dt(date_range.start)
         end_fmt = _format_dt(date_range.end)
+
+        # send request
+        request_id = 0
+        # hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&id=0&dur=100&root={root}&exp={_format_dt(exp)}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&id=0&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        self.server.sendall(hist_msg.encode("utf-8"))
+
+        # parse response header
+        header: Header = Header.parse(self.server.recv(20))
+
+        # receive body data in parts
+        BUFF_SIZE = 4096  # 4 KiB recommended for most machines
+        body_data = b""
+        while True:
+            part = self.server.recv(BUFF_SIZE)
+            body_data += part
+            if len(part) < BUFF_SIZE:
+                # either 0 or end of data
+                break
+
+        # parse response body
+        body: Body = Body.parse(header, body_data)
+
+        print(f"{body.format=}")
+        print(f"{len(body.ticks)=}")
+        print(f"{body.ticks[0]=}")
+        assert False
         return HistOptionResponse()

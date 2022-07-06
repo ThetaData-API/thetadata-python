@@ -1,8 +1,10 @@
 """Contains core datatypes."""
 from __future__ import annotations
 from typing import Any
-from datetime import datetime, timedelta
-from pydantic.dataclasses import dataclass
+from datetime import datetime, timedelta, date
+
+# from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 import enum
 
 
@@ -14,8 +16,97 @@ class EnumParseError(Exception):
         super().__init__(msg)
 
 
-class HeaderParseError(Exception):
-    """Raise when header data is formatted incorrectly."""
+@enum.unique
+class DataType(enum.Enum):
+    """Codes used in the format tick to ID the type of data in the body ticks."""
+
+    DATE = 0  # (, 0)
+    MS_OF_DAY = 1  # (, 0)
+    CORRECTION = 2  # (, 0)
+    PRICE_TYPE = 4  # (, -1)
+
+    # QUOTES
+    BID_SIZE = 101  # (, 1)
+    BID_EXCHANGE = 102  # (, 2)
+    BID = 103  # (, 3, true)
+    BID_CONDITION = 104  # (, 4)
+    ASK_SIZE = 105  # (, 5)
+    ASK_EXCHANGE = 106  # (, 6)
+    ASK = 107  # (, 7, true)
+    ASK_CONDITION = 108  # (, 8)
+
+    # PRICING
+    MIDPOINT = 111  # (, 1)
+    VWAP = 112  # (, 2)
+    QWAP = 113  # (, 3)
+    WAP = 114  # (, 4)
+
+    # OPEN INTEREST
+    OPEN_INTEREST = 121  # (, 1)
+
+    # TRADES
+    PRICE = 131  # (, 1)
+    SIZE = 132  # (, 2)
+    CONDITION = 133  # (, 3)
+
+    # VOLUME
+    VOLUME = 141  # (, 1)
+    COUNT = 142  # (, 2)
+
+    # FIRST ORDER GREEKS
+    THETA = 151  # (, 1)
+    VEGA = 152  # (, 2)
+    DELTA = 153  # (, 3)
+    RHO = 154  # (, 4)
+    EPSILON = 155  # (, 5)
+    LAMBDA = 156  # (, 6)
+
+    # SECOND ORDER GREEKS
+    GAMMA = 161  # (, 1)
+    VANNA = 162  # (, 2)
+    CHARM = 163  # (, 3)
+    VOMMA = 164  # (, 4)
+    VETA = 165  # (, 5)
+    VERA = 166  # (, 6)
+    SOPDK = 167  # (, 7)
+
+    # THIRD ORDER GREEKS
+    SPEED = 171  # (, 1)
+    ZOMMA = 172  # (, 2)
+    COLOR = 173  # (, 3)
+    ULTIMA = 174  # (, 4)
+
+    # OTHER CALCS
+    D1 = 181  # (, 1)
+    D2 = 182  # (, 1)
+    DUAL_DELTA = 183  # (, 3)
+    DUAL_GAMMA = 184  # (, 4)
+
+    # OHLC
+    RATE = 191  # (, 1)
+    OPEN = 192  # (, 2)
+    HIGH = 193  # (, 3)
+    LOW = 194  # (, 4)
+    CLOSE = 195  # (, 5)
+
+    # IMPLIED VOLATILITY
+    IMPLIED_VOL = 201  # (, 1)
+
+    # OTHER
+    RATIO = 211  # (, 1)
+    RATING = 212  # (, 2)
+    LIST = 213  # (, 3)
+
+    @classmethod
+    def from_code(cls: DataType, code: int) -> DataType:
+        """Create a DataType by its associated code.
+
+        :raises EnumParseError: If the code does not match a DataType
+        """
+        for member in cls:
+            if code == member.value:
+                return member
+        raise EnumParseError(code, cls)
 
 
 @enum.unique
@@ -92,7 +183,7 @@ class OptionRight(enum.Enum):
 
 @enum.unique
 class OptionReqType(enum.Enum):
-    """Option request types."""
+    """Option request type codes."""
 
     # VALUE
     DEFAULT = 100
@@ -119,13 +210,12 @@ class OptionReqType(enum.Enum):
 class DateRange:
     """Represents an inclusive date range."""
 
-    start: datetime
-    end: datetime
+    start: date
+    end: date
 
-    def __init__(self, start: datetime, end: datetime):
-        # remove times from datetimes
-        self.start = start.date()
-        self.end = end.date()
+    def __init__(self, start: date, end: date):
+        self.start = start
+        self.end = end
         assert (
             start <= end
         ), f"Start date {self.start} cannot be greater than end date {self.end}!"
@@ -156,11 +246,10 @@ class Header:
         """Parse binary header data into an object.
 
         :param data: raw header data, 20 bytes long
-        :raise HeaderParseError: if data is incorrectly formatted
         """
         assert (
-            len(bytes) == 20
-        ), f"Cannot parse header with {len(bytes)} bytes. Expected 20 bytes."
+            len(data) == 20
+        ), f"Cannot parse header with {len(data)} bytes. Expected 20 bytes."
         # avoid copying header data when slicing
         data = memoryview(data)
         """
@@ -174,13 +263,14 @@ class Header:
                 1 | format length
                 4 | size
         """
+        parse_int = lambda d: int.from_bytes(d, "big")
         # parse
-        msgtype = MessageType.from_code(data[:2])
-        id = data[2:10]
-        latency = data[10:12]
-        error = data[12:14]
+        msgtype = MessageType.from_code(parse_int(data[:2]))
+        id = parse_int(data[2:10])
+        latency = parse_int(data[10:12])
+        error = parse_int(data[12:14])
         format_len = data[15]
-        size = data[16:20]
+        size = parse_int(data[16:20])
         return cls(
             message_type=msgtype,
             id=id,
@@ -189,3 +279,52 @@ class Header:
             format_len=format_len,
             size=size,
         )
+
+
+@dataclass
+class Body:
+    """Represents the body returned on every Terminal call."""
+
+    format: list[DataType]  # format tick
+    ticks: list[Tick]  # body ticks
+
+    @classmethod
+    def parse(cls, header: Header, data: bytes) -> Header:
+        """Parse binary body data into an object.
+
+        :param header: parsed header data
+        :param data: the binary response body
+        """
+        assert (
+            len(data) == header.size
+        ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
+        # avoid copying body data when slicing
+        data = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+
+        # parse ticks
+        n_ticks = int(header.size / (header.format_len * 4))
+        bytes_per_tick = header.format_len
+
+        # parse format tick
+        format_tick_codes = []
+        for b in range(bytes_per_tick):
+            int_ = parse_int(data[b * 4 : b * 4 + 4])
+            format_tick_codes.append(int_)
+        format = list(
+            map(lambda code: DataType.from_code(code), format_tick_codes)
+        )
+
+        # parse the rest of the ticks
+        ticks = []
+        for tn in range(1, n_ticks):
+            tick_offset = tn * bytes_per_tick * 4
+            tick = []
+            for b in range(bytes_per_tick):
+                # parse int
+                int_offset = tick_offset + b * 4
+                int_ = parse_int(data[int_offset : int_offset + 4])
+                tick.append(int_)
+            ticks.append(tick)
+
+        return cls(format=format, ticks=ticks)
