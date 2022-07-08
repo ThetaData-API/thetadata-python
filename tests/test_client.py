@@ -8,6 +8,7 @@ from thetadata import (
     OptionRight,
     DateRange,
     SecType,
+    DataType,
 )
 import pandas as pd
 from pandas import DataFrame, Series
