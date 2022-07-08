@@ -1,0 +1,11 @@
+build/
+venv/
+*.egg-info/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pycharm
+.idea/
+PythonAPI.iml
