@@ -83,7 +83,7 @@ class ThetaClient:
         :param right:          The right of an option.
         :param interval:       Interval size in minutes.
         :param date_range:     The dates to fetch.
-        :param: progress_bar:  Print a progress bar displaying download progress.
+        :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.

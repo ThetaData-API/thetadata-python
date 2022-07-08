@@ -103,6 +103,10 @@ class DataType(enum.Enum):
                 return member
         raise EnumParseError(code, cls)
 
+    def is_price(self) -> bool:
+        """Check if this DataType indicates a price."""
+        return self == DataType.BID
+
 
 @enum.unique
 class MessageType(enum.Enum):
@@ -285,6 +289,31 @@ def _check_body_errors(header: Header, body_data: bytes):
         raise ResponseError(msg)
 
 
+# map price types to price multipliers
+_pt_to_price_mul = [
+    0,
+    0.000000001,
+    0.00000001,
+    0.0000001,
+    0.000001,
+    0.00001,
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0,
+    1000000.0,
+    10000000.0,
+    100000000.0,
+    1000000000.0,
+]
+
+
 class TickBody:
     """Represents the body returned on Terminal calls that deal with ticks."""
 
@@ -322,12 +351,16 @@ class TickBody:
         for b in range(bytes_per_tick):
             int_ = parse_int(data[b * 4 : b * 4 + 4])
             format_tick_codes.append(int_)
-        format = list(
+        format: list[DataType] = list(
             map(lambda code: DataType.from_code(code), format_tick_codes)
         )
 
         # initialize empty dataframe w/ format columns
         df = pd.DataFrame(columns=format)
+
+        # get the index of the price type column if it exists
+        if DataType.PRICE_TYPE in df.columns:
+            price_type_idx = df.columns.get_loc(DataType.PRICE_TYPE)
 
         # parse the rest of the ticks
         ticks = []
@@ -341,7 +374,25 @@ class TickBody:
                 int_offset = tick_offset + b * 4
                 int_ = parse_int(data[int_offset : int_offset + 4])
                 tick.append(int_)
+
+            # map price columns to prices if the tick contains a price type
+            if price_type_idx is not None:
+                # get price multiplier from price type
+                pt = tick[price_type_idx]
+                price_multiplier = _pt_to_price_mul[pt]
+                # multiply tick price fields by price multiplier
+                for i in range(len(tick)):
+                    if format[i].is_price():
+                        tick[i] = tick[i] * price_multiplier
+                # remove price type from tick
+                del tick[price_type_idx]
+
             ticks.append(tick)
+
+        # delete price type column if it exists
+        if price_type_idx is not None:
+            del df[DataType.PRICE_TYPE]
+
         # add ticks to dataframe in a single concat
         df = pd.concat(
             [pd.DataFrame(ticks, columns=df.columns), df],
