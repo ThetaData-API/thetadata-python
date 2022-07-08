@@ -1,14 +1,22 @@
 """Contains various tests for the ThetaClient class."""
 import pytest
 import datetime
-from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
-from pandas.core.frame import DataFrame
+import thetadata
+from thetadata import (
+    ThetaClient,
+    OptionReqType,
+    OptionRight,
+    DateRange,
+    SecType,
+)
+import pandas as pd
+from pandas import DataFrame, Series
 
 
 @pytest.fixture
 def tc():
     """Generate a ThetaClient connected to the Terminal."""
-    client = ThetaClient(timeout=10)
+    client = ThetaClient(timeout=15)
     with client.connect():
         yield client
 
@@ -22,10 +30,40 @@ def test_hist_options(tc: ThetaClient):
         strike=240000,
         right=OptionRight.CALL,
         interval=100,
-        date_range=DateRange.from_days(100),
+        date_range=DateRange.from_days(30),
         progress_bar=True,
     )
     print(res)
     print(res.columns)
     assert isinstance(res, DataFrame)
+    assert len(res) > 0
+
+
+def test_get_expirations(tc: ThetaClient):
+    """Test an expirations listing request."""
+    res = tc.get_expirations(root="BDX")
+    print(res)
+    assert isinstance(res, Series)
+    assert len(res) > 0
+
+
+def test_get_strikes_error(tc: ThetaClient):
+    """Ensure that an invalid strike listing request raises."""
+    with pytest.raises(thetadata.ResponseError) as e_info:
+        res = tc.get_strikes(root="BDX", exp="20220601")
+
+
+def test_get_strikes(tc: ThetaClient):
+    """Test a strike listing request."""
+    res = tc.get_strikes(root="AAPL", exp="20220429")
+    print(res)
+    assert isinstance(res, Series)
+    assert len(res) > 0
+
+
+def test_get_roots(tc: ThetaClient):
+    """Test a root listing request."""
+    res = tc.get_roots(sec=SecType.OPTION)
+    print(res)
+    assert isinstance(res, Series)
     assert len(res) > 0

@@ -1,6 +1,5 @@
 """Contains core datatypes."""
 from __future__ import annotations
-from typing import Any
 from datetime import datetime, timedelta, date
 from tqdm import tqdm
 
@@ -8,15 +7,8 @@ from tqdm import tqdm
 from dataclasses import dataclass
 import enum
 import pandas as pd
-from pandas.core.frame import DataFrame
-
-
-class EnumParseError(Exception):
-    """Raise when a value cannot be parsed into an associated enum member."""
-
-    def __init__(self, value: Any, enm: enum.Enum):
-        msg = f"Value {value} cannot be parsed into a {enm.__name__}!"
-        super().__init__(msg)
+from pandas import DataFrame, Series
+from .exceptions import EnumParseError, ResponseError
 
 
 @enum.unique
@@ -284,8 +276,17 @@ class Header:
         )
 
 
-class Body:
-    """Represents the body returned on every Terminal call."""
+def _check_body_errors(header: Header, body_data: bytes):
+    """Check for errors from the Terminal.
+
+    :raises ResponseError: if the header indicates an error, containing a helpful error message."""
+    if header.message_type == MessageType.ERROR:
+        msg = body_data.decode("ascii")
+        raise ResponseError(msg)
+
+
+class TickBody:
+    """Represents the body returned on Terminal calls that deal with ticks."""
 
     def __init__(self, ticks: DataFrame):
         assert isinstance(
@@ -296,7 +297,7 @@ class Body:
     @classmethod
     def parse(
         cls, header: Header, data: bytes, progress_bar: bool = False
-    ) -> Header:
+    ) -> TickBody:
         """Parse binary body data into an object.
 
         :param header: parsed header data
@@ -306,6 +307,8 @@ class Body:
         assert (
             len(data) == header.size
         ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
+        _check_body_errors(header, data)
+
         # avoid copying body data when slicing
         data = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
@@ -346,3 +349,33 @@ class Body:
         )
 
         return cls(ticks=df)
+
+
+class ListBody:
+    """Represents the body returned on every Terminal call that have one DataType."""
+
+    def __init__(self, lst: Series):
+        assert isinstance(
+            lst, Series
+        ), "Cannot initialize body bc lst is not a Series"
+        self.lst: Series = lst
+
+    @classmethod
+    def parse(
+        cls, header: Header, data: bytes, progress_bar: bool = False
+    ) -> ListBody:
+        """Parse binary body data into an object.
+
+        :param header: parsed header data
+        :param data: the binary response body
+        :param: progress_bar: Print a progress bar displaying progress.
+        """
+        assert (
+            len(data) == header.size
+        ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
+        _check_body_errors(header, data)
+
+        lst = data.decode("ascii").split(",")
+        lst = pd.Series(lst, copy=False)
+
+        return cls(lst=lst)
