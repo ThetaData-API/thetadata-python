@@ -62,6 +62,28 @@ class ThetaClient:
         finally:
             self.server.close()
 
+    def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytes:
+        """Wait for a response from the Terminal.
+        :param n_bytes:       The number of bytes to receive.
+        :param progress_bar:  Print a progress bar displaying download progress.
+        :return:              A response from the Terminal.
+        """
+        # receive body data in parts
+        PART_SIZE = 4096  # 4 KiB recommended for most machines
+
+        buffer = bytearray(n_bytes)
+        bytes_downloaded = 0
+        for i in tqdm(
+            range(0, n_bytes, PART_SIZE),
+            desc="Downloading",
+            disable=not progress_bar,
+        ):
+            bytes_downloaded += PART_SIZE
+            part = self.server.recv(PART_SIZE)
+            buffer[i : i + PART_SIZE] = part
+
+        return bytes(buffer)
+
     def get_hist_option(
         self,
         req: OptionReqType,
@@ -100,18 +122,8 @@ class ThetaClient:
         # parse response header
         header: Header = Header.parse(self.server.recv(20))
 
-        # receive body data in parts
-        BUFF_SIZE = 4096  # 4 KiB recommended for most machines
-        body_data = b""
-        for _ in tqdm(
-            range(0, header.size, BUFF_SIZE),
-            desc="Downloading",
-            disable=not progress_bar,
-        ):
-            part = self.server.recv(BUFF_SIZE)
-            body_data += part
-
         # parse response body
+        body_data = self._recv(header.size, progress_bar=progress_bar)
         body: TickBody = TickBody.parse(
             header, body_data, progress_bar=progress_bar
         )
@@ -132,7 +144,7 @@ class ThetaClient:
         out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&ID={req_id}&root={root}\n"
         self.server.send(out.encode("utf-8"))
         header = Header.parse(self.server.recv(20))
-        body = ListBody.parse(header, self.server.recv(header.size))
+        body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
     def get_strikes(self, root: str, exp: str) -> pd.Series:
@@ -148,7 +160,7 @@ class ThetaClient:
         out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp}\n"
         self.server.send(out.encode("utf-8"))
         header = Header.parse(self.server.recv(20))
-        body = ListBody.parse(header, self.server.recv(header.size))
+        body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
     def get_roots(self, sec: SecType) -> pd.Series:
@@ -163,5 +175,5 @@ class ThetaClient:
         out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&ID={req_id}&sec={sec.value}\n"
         self.server.send(out.encode("utf-8"))
         header = Header.parse(self.server.recv(20))
-        body = ListBody.parse(header, self.server.recv(header.size))
+        body = ListBody.parse(header, self._recv(header.size))
         return body.lst
