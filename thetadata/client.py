@@ -69,7 +69,6 @@ class ThetaClient:
         exp: date,
         strike: int,
         right: OptionRight,
-        interval: int,
         date_range: DateRange,
         progress_bar: bool = False,
     ) -> pd.DataFrame:
@@ -81,7 +80,6 @@ class ThetaClient:
         :param exp:            The expiration date. Associated time is ignored.
         :param strike:         The strike price in United States cents.
         :param right:          The right of an option.
-        :param interval:       Interval size in minutes.
         :param date_range:     The dates to fetch.
         :param progress_bar:   Print a progress bar displaying download progress.
 
