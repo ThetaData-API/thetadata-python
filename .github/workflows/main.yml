@@ -1,0 +1,58 @@
+name: Continuous Deployment
+
+on:
+  pull_request:
+  push:
+    branches:
+      - release
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+      - name: Install pytest
+        run: pip install pytest
+      - name: Install package
+        run: pip install .
+      - name: Test
+        run: python -m pytest .
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build package
+        run: |
+          pip install --upgrade build
+          python -m build
+      - name: Release to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+
+  docs:
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install mkdocs "mkdocstrings[python]"
+      - name: Build docs
+        run: |
+          mkdocs build --verbose
+      - name: Deploy docs
+        run: |
+          mkdocs gh-deploy
