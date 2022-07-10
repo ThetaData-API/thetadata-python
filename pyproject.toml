@@ -18,6 +18,21 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  "tqdm",
+  "pandas"
+]
+
+[project.optional-dependencies]
+tests = [
+  "coverage>=5.0.3",
+  "pytest",
+  "pytest-benchmark[histogram]>=3.2.1",
+]
+docs = [
+    "mkdocs",
+    "mkdocstrings[python]"
+]
 
 [project.urls]
 "Product Homepage" = "thetadata.net"

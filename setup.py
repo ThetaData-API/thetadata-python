@@ -1,10 +1,5 @@
-# pip install .
-from setuptools import setup
+"""Replaced by pyproject.toml. Only needed for editable installs."""
+import setuptools
 
-setup(
-    name="thetadata",
-    version=1.0,
-    packages=["thetadata"],
-    include_package_data=True,
-    install_requires=["pandas", "tqdm"],
-)
+if __name__ == "__main__":
+    setuptools.setup()
