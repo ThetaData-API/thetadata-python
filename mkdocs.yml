@@ -1,0 +1,20 @@
+site_name: ThetaData Python API Documentation
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  logo: logo.png
+
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        options:
+          docstring_style: sphinx
+
+nav:
+- index.md
+- tutorials.md
+- how-to-guides.md
+- reference.md
+- explanation.md
