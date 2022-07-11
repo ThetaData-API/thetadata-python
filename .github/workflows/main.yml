@@ -34,8 +34,17 @@ jobs:
       - name: Test
         run: python -m pytest .
 
-  deploy:
-    needs: test
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: pip install ".[docs]"
+      - name: Build docs
+        run: mkdocs build
+
+  deploy-pypi:
+    needs: [test, build-docs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,24 +53,30 @@ jobs:
         run: |
           pip install --upgrade build
           python -m build
-      - name: Release to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          verbose: true
+      # - name: Release to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     user: __token__
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
+      #     verbose: true
 
-  docs:
-    needs: [test, deploy]
+  deploy-docs:
+    needs: [test, deploy-pypi]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: pip install ".[docs]"
-      - name: Build docs
         run: |
-          mkdocs build --verbose
+          # TODO: mhausenblas/mkdocs-deploy-gh-pages@nomaterial does not work with this:
+          # pip install ".[docs]"
+          # pip freeze > docs/requirements.txt
+          # I'll manually list dependencies instead
+          echo "mkdocs" >> requirements.txt
+          echo "mkdocstrings[python]" >> requirements.txt
+
       - name: Deploy docs
-        run: |
-          mkdocs gh-deploy
+        uses: mhausenblas/mkdocs-deploy-gh-pages@nomaterial
+        env:
+          PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          REQUIREMENTS: docs/requirements.txt
