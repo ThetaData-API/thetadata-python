@@ -10,6 +10,9 @@ authors = [
   { name="Bailey Danseglio", email="baileydan911@gmail.com" },
 ]
 description = "Python API for ThetaData"
+homepage = "https://thetadata.net"
+repository = "https://github.com/ThetaData-API/PythonAPI"
+documentation = "https://TODO.com"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
@@ -35,6 +38,4 @@ docs = [
 ]
 
 [project.urls]
-"Product Homepage" = "thetadata.net"
-"API Homepage" = "https://github.com/ThetaData-API/PythonAPI"
 "Bug Tracker" = "https://github.com/ThetaData-API/PythonAPI/issues"
