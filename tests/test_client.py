@@ -30,12 +30,29 @@ def test_hist_options(tc: ThetaClient):
         exp=datetime.date(2022, 7, 1),
         strike=240000,
         right=OptionRight.CALL,
-        interval=100,
         date_range=DateRange.from_days(30),
         progress_bar=True,
     )
     print(res)
     print(res.columns)
+    assert isinstance(res, DataFrame)
+    assert len(res) > 0
+
+
+def test_hist_options_large(tc: ThetaClient):
+    """Test a very large historical option request."""
+    res = tc.get_hist_option(
+        req=OptionReqType.QUOTE,
+        root="AAPL",
+        exp=datetime.date(2022, 7, 1),
+        strike=140000,
+        right=OptionRight.CALL,
+        date_range=DateRange(
+            datetime.date(2022, 7, 4), datetime.date(2022, 7, 8)
+        ),
+        progress_bar=True,
+    )
+    print(res)
     assert isinstance(res, DataFrame)
     assert len(res) > 0
 
@@ -68,3 +85,17 @@ def test_get_roots(tc: ThetaClient):
     print(res)
     assert isinstance(res, Series)
     assert len(res) > 0
+
+
+@pytest.mark.skip(reason="Response is a WIP - still needs format tick")
+def test_get_last(tc: ThetaClient):
+    """Test a get last option data request."""
+    res = tc.get_last_option(
+        root="BDX",
+        exp=datetime.date(2022, 7, 1),
+        strike=240000,
+        right=OptionRight.CALL,
+    )
+    print(res)
+    assert isinstance(res, DataFrame)
+    assert len(res) == 1

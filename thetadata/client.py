@@ -24,8 +24,8 @@ from .exceptions import ResponseError
 _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 
 
-def _format_dt(dt: datetime) -> str:
-    """Format a datetime obj into a string acceptable by the terminal."""
+def _format_date(dt: date) -> str:
+    """Format a date obj into a string acceptable by the terminal."""
     return dt.strftime("%Y%m%d")
 
 
@@ -95,7 +95,7 @@ class ThetaClient:
         progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
-        Send a historical option data request.
+        Get historical option data.
 
         :param req:            The request type.
         :param root:           The root symbol.
@@ -110,13 +110,14 @@ class ThetaClient:
         """
         # format data
         assert self.server is not None, _NOT_CONNECTED_MSG
-        exp_fmt = _format_dt(exp)
-        start_fmt = _format_dt(date_range.start)
-        end_fmt = _format_dt(date_range.end)
+        exp_fmt = _format_date(exp)
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
 
         # send request
         request_id = 0
         hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&dur=5&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
         self.server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
@@ -140,6 +141,7 @@ class ThetaClient:
         :return: All expirations that Theta Data provides data for (YYYYMMDD).
         :raises ResponseError: If the request failed.
         """
+        assert self.server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&ID={req_id}&root={root}\n"
         self.server.send(out.encode("utf-8"))
@@ -156,6 +158,7 @@ class ThetaClient:
         :return: The strike prices on the expiration.
         :raises ResponseError: If the request failed.
         """
+        assert self.server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp}\n"
         self.server.send(out.encode("utf-8"))
@@ -171,9 +174,45 @@ class ThetaClient:
         :return: All root symbols for the security type.
         :raises ResponseError: If the request failed.
         """
+        assert self.server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&ID={req_id}&sec={sec.value}\n"
         self.server.send(out.encode("utf-8"))
         header = Header.parse(self.server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
         return body.lst
+
+    # LIVE DATA
+
+    def get_last_option(
+        self,
+        root: str,
+        exp: date,
+        strike: int,
+        right: OptionRight,
+    ) -> pd.DataFrame:
+        """
+        Get the most recent option data.
+
+        :param root:           The root symbol.
+        :param exp:            The expiration date. Associated time is ignored.
+        :param strike:         The strike price in United States cents.
+        :param right:          The right of an option.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        """
+        # format data
+        assert self.server is not None, _NOT_CONNECTED_MSG
+        exp_fmt = _format_date(exp)
+
+        # send request
+        request_id = 0
+        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.LAST.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}\n"
+        self.server.sendall(hist_msg.encode("utf-8"))
+
+        # parse response
+        header: Header = Header.parse(self.server.recv(20))
+        body: TickBody = TickBody.parse(header, self._recv(header.size))
+
+        return body.ticks
