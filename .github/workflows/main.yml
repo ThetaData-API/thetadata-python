@@ -23,8 +23,6 @@ jobs:
           wget --output-document ThetaTerminal.jar https://www.dropbox.com/s/nhre458ha5c7jd5/ThetaTerminal.jar?dl=1
       - name: Run the Terminal
         run: |
-          echo $USERNAME > test.txt
-          wc --chars test.txt
           sudo java -jar ThetaTerminal.jar $USERNAME $PASSWORD &
         env:
           USERNAME: ${{ secrets.TERMINAL_USERNAME }}

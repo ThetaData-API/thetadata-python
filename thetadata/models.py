@@ -15,82 +15,89 @@ from .exceptions import EnumParseError, ResponseError
 class DataType(enum.Enum):
     """Codes used in the format tick to ID the type of data in the body ticks."""
 
-    DATE = 0  # (, 0)
-    MS_OF_DAY = 1  # (, 0)
-    CORRECTION = 2  # (, 0)
-    PRICE_TYPE = 4  # (, -1)
+    DATE = (0, False)
+    MS_OF_DAY = (1, False)
+    CORRECTION = (2, False)
+    PRICE_TYPE = (4, False)
 
     # QUOTES
-    BID_SIZE = 101  # (, 1)
-    BID_EXCHANGE = 102  # (, 2)
-    BID = 103  # (, 3, true)
-    BID_CONDITION = 104  # (, 4)
-    ASK_SIZE = 105  # (, 5)
-    ASK_EXCHANGE = 106  # (, 6)
-    ASK = 107  # (, 7, true)
-    ASK_CONDITION = 108  # (, 8)
+    BID_SIZE = (101, False)
+    BID_EXCHANGE = (102, False)
+    BID = (103, True)
+    BID_CONDITION = (104, False)
+    ASK_SIZE = (105, False)
+    ASK_EXCHANGE = (106, False)
+    ASK = (107, True)
+    ASK_CONDITION = (108, False)
 
     # PRICING
-    MIDPOINT = 111  # (, 1)
-    VWAP = 112  # (, 2)
-    QWAP = 113  # (, 3)
-    WAP = 114  # (, 4)
+    MIDPOINT = (111, True)
+    VWAP = (112, True)
+    QWAP = (113, True)
+    WAP = (114, True)
 
     # OPEN INTEREST
-    OPEN_INTEREST = 121  # (, 1)
+    OPEN_INTEREST = (121, True)
 
     # TRADES
-    PRICE = 131  # (, 1)
-    SIZE = 132  # (, 2)
-    CONDITION = 133  # (, 3)
+    SEQUENCE = (131, False)
+    SIZE = (132, False)
+    CONDITION = (133, False)
+    PRICE = (134, True)
 
     # VOLUME
-    VOLUME = 141  # (, 1)
-    COUNT = 142  # (, 2)
+    VOLUME = (141, False)
+    COUNT = (142, False)
 
     # FIRST ORDER GREEKS
-    THETA = 151  # (, 1)
-    VEGA = 152  # (, 2)
-    DELTA = 153  # (, 3)
-    RHO = 154  # (, 4)
-    EPSILON = 155  # (, 5)
-    LAMBDA = 156  # (, 6)
+    THETA = (151, True)
+    VEGA = (152, True)
+    DELTA = (153, True)
+    RHO = (154, True)
+    EPSILON = (155, True)
+    LAMBDA = (156, True)
 
     # SECOND ORDER GREEKS
-    GAMMA = 161  # (, 1)
-    VANNA = 162  # (, 2)
-    CHARM = 163  # (, 3)
-    VOMMA = 164  # (, 4)
-    VETA = 165  # (, 5)
-    VERA = 166  # (, 6)
-    SOPDK = 167  # (, 7)
+    GAMMA = (161, True)
+    VANNA = (162, True)
+    CHARM = (163, True)
+    VOMMA = (164, True)
+    VETA = (165, True)
+    VERA = (166, True)
+    SOPDK = (167, True)
 
     # THIRD ORDER GREEKS
-    SPEED = 171  # (, 1)
-    ZOMMA = 172  # (, 2)
-    COLOR = 173  # (, 3)
-    ULTIMA = 174  # (, 4)
+    SPEED = (171, True)
+    ZOMMA = (172, True)
+    COLOR = (173, True)
+    ULTIMA = (174, True)
 
     # OTHER CALCS
-    D1 = 181  # (, 1)
-    D2 = 182  # (, 1)
-    DUAL_DELTA = 183  # (, 3)
-    DUAL_GAMMA = 184  # (, 4)
+    D1 = (181, True)
+    D2 = (182, True)
+    DUAL_DELTA = (183, True)
+    DUAL_GAMMA = (184, True)
 
     # OHLC
-    RATE = 191  # (, 1)
-    OPEN = 192  # (, 2)
-    HIGH = 193  # (, 3)
-    LOW = 194  # (, 4)
-    CLOSE = 195  # (, 5)
+    OPEN = (191, False)
+    HIGH = (192, False)
+    LOW = (193, False)
+    CLOSE = (194, False)
 
     # IMPLIED VOLATILITY
-    IMPLIED_VOL = 201  # (, 1)
+    IMPLIED_VOL = (201, False)
 
     # OTHER
-    RATIO = 211  # (, 1)
-    RATING = 212  # (, 2)
-    LIST = 213  # (, 3)
+    RATIO = (211, True)
+    RATING = (212, True)
+
+    # DIVIDEND
+    EX_DATE = (221, False)
+    RECORD_DATE = (222, False)
+    PAYMENT_DATE = (223, False)
+    ANN_DATE = (224, False)
+    DIVIDEND_AMOUNT = (225, True)
+    LESS_AMOUNT = (226, True)
 
     @classmethod
     def from_code(cls: DataType, code: int) -> DataType:
@@ -99,13 +106,17 @@ class DataType(enum.Enum):
         :raises EnumParseError: If the code does not match a DataType
         """
         for member in cls:
-            if code == member.value:
+            if code == member.value[0]:
                 return member
         raise EnumParseError(code, cls)
 
+    def code(self) -> int:
+        """:return: The datatype code associated w this type."""
+        return self.value[0]
+
     def is_price(self) -> bool:
         """Check if this DataType indicates a price."""
-        return self == DataType.BID
+        return self.value[1]
 
 
 @enum.unique
@@ -134,7 +145,7 @@ class MessageType(enum.Enum):
     ALL_EXPIRATIONS = 201
     ALL_STRIKES = 202
     HIST_END = 203
-    LAST_QUOTE = 204
+    LAST = 204
     ALL_ROOTS = 205
     LIST_END = 206
 
@@ -184,25 +195,27 @@ class OptionRight(enum.Enum):
 class OptionReqType(enum.Enum):
     """Option request type codes."""
 
+    # FREE
+    EOD = 1
+
     # VALUE
-    DEFAULT = 100
     QUOTE = 101
     VOLUME = 102
     OPEN_INTEREST = 103
+    OHLC = 104
 
     # STANDARD
-    LIQUIDITY = 201
-    LIQUIDITY_PLUS = 202
-    IMPLIED_VOLATILITY = 203
-    GREEKS = 204
-    OHLC = 205
+    TRADE = 201
+    IMPLIED_VOLATILITY = 202
+    GREEKS = 203
+    LIQUIDITY = 204
+    LIQUIDITY_PLUS = 205
 
     # PRO
-    TRADE = 301
-    TRADE_GREEKS = 302
-    GREEKS_SECOND_ORDER = 303
-    GREEKS_THIRD_ORDER = 304
-    ALT_CALCS = 305
+    TRADE_GREEKS = 301
+    GREEKS_SECOND_ORDER = 302
+    GREEKS_THIRD_ORDER = 303
+    ALT_CALCS = 304
 
 
 @dataclass
