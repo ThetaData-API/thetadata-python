@@ -7,6 +7,10 @@ This documentation will be updated every major release. The first page will alwa
 display the date this was last updated, the API version, and the Theta Terminal
 version the documentation uses.
 
+Documentation
+
+An updated documentation of this api can be found here: https://thetadata-api.github.io/PythonAPI/
+
 
 Additional Information
 
