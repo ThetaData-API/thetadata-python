@@ -4,27 +4,30 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thetadata"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Adler Weber", email="adlerweber8430@gmail.com" },
   { name="Bailey Danseglio", email="baileydan911@gmail.com" },
 ]
 description = "Python API for ThetaData"
-homepage = "https://thetadata.net"
-repository = "https://github.com/ThetaData-API/PythonAPI"
-documentation = "https://TODO.com"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
   "tqdm",
   "pandas"
 ]
+urls = {
+  "Homepage": "https://thetadata.net",
+  "Source": "https://thetadata-api.github.io/PythonAPI/reference/",
+  "Bug Tracker": "https://github.com/ThetaData-API/PythonAPI/issues",
+  "Documentation": "https://thetadata-api.github.io/PythonAPI/"
+}
 
 [project.optional-dependencies]
 tests = [
@@ -33,9 +36,7 @@ tests = [
   "pytest-benchmark[histogram]>=3.2.1",
 ]
 docs = [
-    "mkdocs",
-    "mkdocstrings[python]"
+  "mkdocs",
+  "mkdocstrings[python]",
+  "mkdocs-material"
 ]
-
-[project.urls]
-"Bug Tracker" = "https://github.com/ThetaData-API/PythonAPI/issues"

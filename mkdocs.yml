@@ -1,20 +1,35 @@
-site_name: ThetaData Python API Documentation
+site_name: Theta Data Python Documentation
 
 theme:
-  name: readthedocs
-  highlightjs: true
+  name: material
+  palette:
+    scheme: slate
   logo: logo.png
+
+repo_url: https://github.com/ThetaData-API/PythonAPI
+repo_name: ThetaData-API/PythonAPI
+
+markdown_extensions:
+  - pymdownx.highlight:
+      linenums: false
+      anchor_linenums: true
+      auto_title: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences 
+
 
 plugins:
 - mkdocstrings:
     handlers:
       python:
+        rendering:
+            show_if_no_docstring: yes
         options:
           docstring_style: sphinx
+          show_root_heading: true
 
 nav:
 - index.md
 - tutorials.md
-- how-to-guides.md
 - reference.md
 - explanation.md
