@@ -1,7 +1,7 @@
 
 This site contains the latest documentation and guides for the
 [Theta Data Python API](https://github.com/ThetaData-API/PythonAPI),
-a Python package that provides low latency historical options data.
+a Python package that provides low latency real-time & historical options data.
 
 For more information, see [thetadata.net](https://thetadata.net).
 
