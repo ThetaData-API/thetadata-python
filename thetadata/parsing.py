@@ -1,9 +1,12 @@
 """Module that parses data from the Terminal."""
 from __future__ import annotations
+from typing import Optional
+
 from tqdm import tqdm
 
 from dataclasses import dataclass
 import pandas as pd
+import numpy as np
 from pandas import DataFrame, Series
 from .exceptions import ResponseError
 from .enums import _DataType, MessageType
@@ -122,16 +125,15 @@ class TickBody:
 
         # avoid copying body data when slicing
         data = memoryview(data)
-        parse_int = lambda d: int.from_bytes(d, "big")
 
         # parse ticks
+        n_cols = header.format_len
         n_ticks = int(header.size / (header.format_len * 4))
-        bytes_per_tick = header.format_len
 
         # parse format tick
         format_tick_codes = []
-        for b in range(bytes_per_tick):
-            int_ = parse_int(data[b * 4 : b * 4 + 4])
+        for ci in range(n_cols):
+            int_ = int.from_bytes(data[ci * 4 : ci * 4 + 4], "big")
             format_tick_codes.append(int_)
         format: list[_DataType] = list(
             map(lambda code: _DataType.from_code(code), format_tick_codes)
@@ -140,49 +142,53 @@ class TickBody:
         # initialize empty dataframe w/ format columns
         df = pd.DataFrame(columns=format)
 
-        # get the index of the price type column if it exists
-        price_type_idx = None
-        if _DataType.PRICE_TYPE in df.columns:
+        try:
             price_type_idx = df.columns.get_loc(_DataType.PRICE_TYPE)
+        except KeyError:
+            price_type_idx = None
 
         # parse the rest of the ticks
-        ticks = []
+        ticks = np.empty((n_ticks, n_cols))
+        # TODO: multithread processing
         for tn in tqdm(
             range(1, n_ticks), desc="Processing", disable=not progress_bar
         ):
-            tick_offset = tn * bytes_per_tick * 4
-            tick = []
-            for b in range(bytes_per_tick):
+            # the first byte of the tnth tick
+            tick_offset = tn * n_cols * 4
+            tick = np.empty(n_cols)
+            for ci in range(n_cols):
                 # parse int
-                int_offset = tick_offset + b * 4
-                int_ = parse_int(data[int_offset : int_offset + 4])
-                tick.append(int_)
+                int_offset = tick_offset + ci * 4
+                int_ = int.from_bytes(data[int_offset : int_offset + 4], "big")
+                # map price types to price multipliers
+                tick[ci] = (
+                    _pt_to_price_mul[int_]
+                    if price_type_idx is not None and price_type_idx == ci
+                    else int_
+                )
 
-            # map price columns to prices if the tick contains a price type
-            if price_type_idx is not None:
-                # get price multiplier from price type
-                pt = tick[price_type_idx]
-                price_multiplier = _pt_to_price_mul[pt]
-                # multiply tick price fields by price multiplier
-                for i in range(len(tick)):
-                    if format[i].is_price():
-                        tick[i] = tick[i] * price_multiplier
-                # remove price type from tick
-                del tick[price_type_idx]
+            ticks[tn - 1] = tick
 
-            ticks.append(tick)
-
-        # delete price type column if it exists
-        if price_type_idx is not None:
-            del df[_DataType.PRICE_TYPE]
-
-        # add ticks to dataframe in a single concat
-        df = pd.concat(
-            [pd.DataFrame(ticks, columns=df.columns), df],
-            ignore_index=True,
-        )
+        # load ticks into DataFrame
+        df = pd.DataFrame(ticks, columns=df.columns, copy=False)
+        cls._post_process(df)
 
         return cls(ticks=df)
+
+    @classmethod
+    def _post_process(cls, df: DataFrame) -> None:
+        """Modify tick data w/ various quality-of-life improvements.
+
+        :param df: The DataFrame to modify in-place.
+        """
+        if _DataType.PRICE_TYPE in df.columns:
+            # multiply prices by price multipliers
+            for col in df.columns:
+                if col.is_price():
+                    df[col] *= df[_DataType.PRICE_TYPE]
+
+            # remove price type column
+            del df[_DataType.PRICE_TYPE]
 
 
 class ListBody:
