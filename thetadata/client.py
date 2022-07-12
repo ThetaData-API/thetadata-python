@@ -1,4 +1,4 @@
-"""Contains the Theta Client class and response models."""
+"""Module that contains Theta Client class."""
 from typing import Optional, Callable
 from contextlib import contextmanager
 from functools import wraps
@@ -7,16 +7,11 @@ import socket
 from tqdm import tqdm
 import pandas as pd
 
-from .models import (
-    OptionReqType,
-    OptionRight,
-    DataType,
-    DateRange,
+from .enums import *
+from .parsing import (
     Header,
     TickBody,
     ListBody,
-    MessageType,
-    SecType,
 )
 
 from .exceptions import ResponseError
@@ -27,10 +22,6 @@ _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 def _format_date(dt: date) -> str:
     """Format a date obj into a string acceptable by the terminal."""
     return dt.strftime("%Y%m%d")
-
-
-class HistOptionResponse:
-    """The deserialized response from a historical option request."""
 
 
 class ThetaClient:
@@ -45,22 +36,22 @@ class ThetaClient:
         """
         self.port: int = port
         self.timeout = timeout
-        self.server: Optional[socket.socket] = None  # None while disconnected
+        self._server: Optional[socket.socket] = None  # None while disconnected
 
     @contextmanager
     def connect(self):
-        """Initiate a connection with the Theta Terminal on localhost.
+        """Initiate a connection with the Theta Terminal on `localhost`.
 
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
         """
         try:
-            self.server = socket.socket()
-            self.server.connect(("localhost", self.port))
-            self.server.settimeout(self.timeout)
+            self._server = socket.socket()
+            self._server.connect(("localhost", self.port))
+            self._server.settimeout(self.timeout)
             yield
         finally:
-            self.server.close()
+            self._server.close()
 
     def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytes:
         """Wait for a response from the Terminal.
@@ -68,6 +59,8 @@ class ThetaClient:
         :param progress_bar:  Print a progress bar displaying download progress.
         :return:              A response from the Terminal.
         """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+
         # receive body data in parts
         PART_SIZE = 4096  # 4 KiB recommended for most machines
 
@@ -79,7 +72,7 @@ class ThetaClient:
             disable=not progress_bar,
         ):
             bytes_downloaded += PART_SIZE
-            part = self.server.recv(PART_SIZE)
+            part = self._server.recv(PART_SIZE)
             buffer[i : i + PART_SIZE] = part
 
         return bytes(buffer)
@@ -99,7 +92,7 @@ class ThetaClient:
 
         :param req:            The request type.
         :param root:           The root symbol.
-        :param exp:            The expiration date. Associated time is ignored.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in United States cents.
         :param right:          The right of an option.
         :param date_range:     The dates to fetch.
@@ -109,7 +102,7 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         """
         # format data
-        assert self.server is not None, _NOT_CONNECTED_MSG
+        assert self._server is not None, _NOT_CONNECTED_MSG
         exp_fmt = _format_date(exp)
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
@@ -117,11 +110,10 @@ class ThetaClient:
         # send request
         request_id = 0
         hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
-        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&dur=5&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
-        self.server.sendall(hist_msg.encode("utf-8"))
+        self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
-        header: Header = Header.parse(self.server.recv(20))
+        header: Header = Header.parse(self._server.recv(20))
 
         # parse response body
         body_data = self._recv(header.size, progress_bar=progress_bar)
@@ -141,11 +133,11 @@ class ThetaClient:
         :return: All expirations that Theta Data provides data for (YYYYMMDD).
         :raises ResponseError: If the request failed.
         """
-        assert self.server is not None, _NOT_CONNECTED_MSG
+        assert self._server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&ID={req_id}&root={root}\n"
-        self.server.send(out.encode("utf-8"))
-        header = Header.parse(self.server.recv(20))
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
@@ -158,11 +150,11 @@ class ThetaClient:
         :return: The strike prices on the expiration.
         :raises ResponseError: If the request failed.
         """
-        assert self.server is not None, _NOT_CONNECTED_MSG
+        assert self._server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp}\n"
-        self.server.send(out.encode("utf-8"))
-        header = Header.parse(self.server.recv(20))
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
@@ -174,11 +166,11 @@ class ThetaClient:
         :return: All root symbols for the security type.
         :raises ResponseError: If the request failed.
         """
-        assert self.server is not None, _NOT_CONNECTED_MSG
+        assert self._server is not None, _NOT_CONNECTED_MSG
         req_id = 1
         out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&ID={req_id}&sec={sec.value}\n"
-        self.server.send(out.encode("utf-8"))
-        header = Header.parse(self.server.recv(20))
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
@@ -186,6 +178,7 @@ class ThetaClient:
 
     def get_last_option(
         self,
+        req: OptionReqType,
         root: str,
         exp: date,
         strike: int,
@@ -194,6 +187,7 @@ class ThetaClient:
         """
         Get the most recent option data.
 
+        :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Associated time is ignored.
         :param strike:         The strike price in United States cents.
@@ -203,16 +197,16 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         """
         # format data
-        assert self.server is not None, _NOT_CONNECTED_MSG
+        assert self._server is not None, _NOT_CONNECTED_MSG
         exp_fmt = _format_date(exp)
 
         # send request
         request_id = 0
-        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.LAST.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}\n"
-        self.server.sendall(hist_msg.encode("utf-8"))
+        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.LAST.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response
-        header: Header = Header.parse(self.server.recv(20))
+        header: Header = Header.parse(self._server.recv(20))
         body: TickBody = TickBody.parse(header, self._recv(header.size))
 
         return body.ticks

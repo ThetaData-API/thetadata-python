@@ -8,7 +8,6 @@ from thetadata import (
     OptionRight,
     DateRange,
     SecType,
-    DataType,
 )
 import pandas as pd
 from pandas import DataFrame, Series
@@ -22,29 +21,29 @@ def tc():
         yield client
 
 
-def test_hist_options(tc: ThetaClient):
+def test_hist_option_quotes_small(tc: ThetaClient):
     """Test a historical option request."""
     res = tc.get_hist_option(
         req=OptionReqType.QUOTE,
-        root="BDX",
-        exp=datetime.date(2022, 7, 1),
-        strike=240000,
+        root="AAPL",
+        exp=datetime.date(2022, 7, 15),
+        strike=140000,
         right=OptionRight.CALL,
-        date_range=DateRange.from_days(30),
+        date_range=DateRange.from_days(1),
         progress_bar=True,
     )
     print(res)
     print(res.columns)
     assert isinstance(res, DataFrame)
-    assert len(res) > 0
+    assert len(res.index) > 0
 
 
-def test_hist_options_large(tc: ThetaClient):
+def test_hist_option_quotes_large(tc: ThetaClient):
     """Test a very large historical option request."""
     res = tc.get_hist_option(
         req=OptionReqType.QUOTE,
         root="AAPL",
-        exp=datetime.date(2022, 7, 1),
+        exp=datetime.date(2022, 7, 15),
         strike=140000,
         right=OptionRight.CALL,
         date_range=DateRange(
@@ -54,7 +53,39 @@ def test_hist_options_large(tc: ThetaClient):
     )
     print(res)
     assert isinstance(res, DataFrame)
-    assert len(res) > 0
+    assert len(res.index) > 0
+
+
+def test_hist_option_trades(tc: ThetaClient):
+    """Test a very large historical option request."""
+    res = tc.get_hist_option(
+        req=OptionReqType.TRADE,
+        root="AAPL",
+        exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
+        strike=140000,
+        right=OptionRight.CALL,
+        date_range=DateRange.from_days(7),
+        progress_bar=True,
+    )
+    print(res)
+    assert isinstance(res, DataFrame)
+    assert len(res.index) > 0
+
+
+def test_hist_option_open_interest(tc: ThetaClient):
+    """Test a very large historical option request."""
+    res = tc.get_hist_option(
+        req=OptionReqType.OPEN_INTEREST,
+        root="AAPL",
+        exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
+        strike=140000,
+        right=OptionRight.CALL,
+        date_range=DateRange.from_days(7),
+        progress_bar=True,
+    )
+    print(res)
+    assert isinstance(res, DataFrame)
+    assert len(res.index) > 0
 
 
 def test_get_expirations(tc: ThetaClient):
@@ -62,7 +93,7 @@ def test_get_expirations(tc: ThetaClient):
     res = tc.get_expirations(root="BDX")
     print(res)
     assert isinstance(res, Series)
-    assert len(res) > 0
+    assert len(res.index) > 0
 
 
 def test_get_strikes_error(tc: ThetaClient):
@@ -76,7 +107,7 @@ def test_get_strikes(tc: ThetaClient):
     res = tc.get_strikes(root="AAPL", exp="20220429")
     print(res)
     assert isinstance(res, Series)
-    assert len(res) > 0
+    assert len(res.index) > 0
 
 
 def test_get_roots(tc: ThetaClient):
@@ -84,18 +115,18 @@ def test_get_roots(tc: ThetaClient):
     res = tc.get_roots(sec=SecType.OPTION)
     print(res)
     assert isinstance(res, Series)
-    assert len(res) > 0
+    assert len(res.index) > 0
 
 
-@pytest.mark.skip(reason="Response is a WIP - still needs format tick")
 def test_get_last(tc: ThetaClient):
     """Test a get last option data request."""
     res = tc.get_last_option(
-        root="BDX",
-        exp=datetime.date(2022, 7, 1),
-        strike=240000,
+        req=OptionReqType.QUOTE,
+        root="AAPL",
+        exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
+        strike=140000,
         right=OptionRight.CALL,
     )
     print(res)
     assert isinstance(res, DataFrame)
-    assert len(res) == 1
+    assert len(res.index) == 1
