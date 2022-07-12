@@ -29,7 +29,7 @@ def test_hist_option_quotes_small(tc: ThetaClient):
         exp=datetime.date(2022, 7, 15),
         strike=140000,
         right=OptionRight.CALL,
-        date_range=DateRange.from_days(1),
+        date_range=DateRange.from_days(7),
         progress_bar=True,
     )
     print(res)
