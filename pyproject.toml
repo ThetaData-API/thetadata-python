@@ -22,12 +22,6 @@ dependencies = [
   "tqdm",
   "pandas"
 ]
-urls = {
-  "Homepage": "https://thetadata.net",
-  "Source": "https://thetadata-api.github.io/PythonAPI/reference/",
-  "Bug Tracker": "https://github.com/ThetaData-API/PythonAPI/issues",
-  "Documentation": "https://thetadata-api.github.io/PythonAPI/"
-}
 
 [project.optional-dependencies]
 tests = [
@@ -40,3 +34,9 @@ docs = [
   "mkdocstrings[python]",
   "mkdocs-material"
 ]
+
+[project.urls]
+"Homepage" = "https://thetadata.net"
+"Source" = "https://thetadata-api.github.io/PythonAPI/reference/"
+"Bug Tracker" = "https://github.com/ThetaData-API/PythonAPI/issues"
+"Documentation" = "https://thetadata-api.github.io/PythonAPI/"
