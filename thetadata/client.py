@@ -93,7 +93,7 @@ class ThetaClient:
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
-        :param strike:         The strike price in United States cents.
+        :param strike:         The strike price in tenths of a US cent.
         :param right:          The right of an option.
         :param date_range:     The dates to fetch.
         :param progress_bar:   Print a progress bar displaying download progress.
@@ -190,7 +190,7 @@ class ThetaClient:
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Associated time is ignored.
-        :param strike:         The strike price in United States cents.
+        :param strike:         The strike price in tenths of a US cent.
         :param right:          The right of an option.
 
         :return:               The requested data as a pandas DataFrame.

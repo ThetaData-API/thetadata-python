@@ -181,14 +181,28 @@ class TickBody:
 
         :param df: The DataFrame to modify in-place.
         """
+        # remove trailing null tick
+        last_row = df.tail(1)
+        zeroes = last_row.squeeze() == 0
+        if zeroes.all():
+            print(f"Dropping {last_row=}")
+            df.drop(last_row.index, inplace=True)
+
         if _DataType.PRICE_TYPE in df.columns:
-            # multiply prices by price multipliers
+            # multiply prices by price multipliers that are now stored in
+            # the PRICE_TYPE col
             for col in df.columns:
                 if col.is_price():
                     df[col] *= df[_DataType.PRICE_TYPE]
 
             # remove price type column
             del df[_DataType.PRICE_TYPE]
+
+        # convert date ints to datetime
+        if _DataType.DATE in df.columns:
+            df[_DataType.DATE] = pd.to_datetime(
+                df[_DataType.DATE], format="%Y%m%d"
+            )
 
 
 class ListBody:
