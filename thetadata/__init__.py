@@ -1,3 +1,4 @@
 from .client import ThetaClient
-from .models import *
+from .enums import *
+from .parsing import *
 from .exceptions import *
