@@ -19,6 +19,11 @@ from .exceptions import ResponseError
 _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 
 
+def _format_strike(strike: float) -> int:
+    """Round USD to the nearest tenth of a cent, acceptable by the terminal."""
+    return round(strike * 1000)
+
+
 def _format_date(dt: date) -> str:
     """Format a date obj into a string acceptable by the terminal."""
     return dt.strftime("%Y%m%d")
@@ -82,7 +87,7 @@ class ThetaClient:
         req: OptionReqType,
         root: str,
         exp: date,
-        strike: int,
+        strike: float,
         right: OptionRight,
         date_range: DateRange,
         progress_bar: bool = False,
@@ -93,7 +98,7 @@ class ThetaClient:
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
-        :param strike:         The strike price in tenths of a US cent.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an option.
         :param date_range:     The dates to fetch.
         :param progress_bar:   Print a progress bar displaying download progress.
@@ -101,8 +106,9 @@ class ThetaClient:
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
         """
-        # format data
         assert self._server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
         exp_fmt = _format_date(exp)
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
@@ -141,18 +147,20 @@ class ThetaClient:
         body = ListBody.parse(header, self._recv(header.size))
         return body.lst
 
-    def get_strikes(self, root: str, exp: str) -> pd.Series:
+    def get_strikes(self, root: str, exp: date) -> pd.Series:
         """
-        Get all option strike prices in US cents.
+        Get all option strike prices in US tenths of a cent.
 
         :param root: The root symbol.
-        :param exp: The expiration date (YYYYMMDD).
+        :param exp: The expiration date.
         :return: The strike prices on the expiration.
         :raises ResponseError: If the request failed.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
+        assert isinstance(exp, date)
+        exp_fmt = _format_date(exp)
         req_id = 1
-        out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp}\n"
+        out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp_fmt}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
@@ -181,7 +189,7 @@ class ThetaClient:
         req: OptionReqType,
         root: str,
         exp: date,
-        strike: int,
+        strike: float,
         right: OptionRight,
     ) -> pd.DataFrame:
         """
@@ -189,15 +197,16 @@ class ThetaClient:
 
         :param req:            The request type.
         :param root:           The root symbol.
-        :param exp:            The expiration date. Associated time is ignored.
-        :param strike:         The strike price in tenths of a US cent.
+        :param exp:            The expiration date.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an option.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
         """
-        # format data
         assert self._server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
         exp_fmt = _format_date(exp)
 
         # send request
