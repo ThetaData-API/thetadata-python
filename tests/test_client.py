@@ -27,7 +27,7 @@ def test_hist_option_quotes_small(tc: ThetaClient):
         req=OptionReqType.QUOTE,
         root="AAPL",
         exp=datetime.date(2022, 7, 15),
-        strike=140000,
+        strike=140,
         right=OptionRight.CALL,
         date_range=DateRange.from_days(7),
         progress_bar=True,
@@ -44,7 +44,7 @@ def test_hist_option_quotes_large(tc: ThetaClient):
         req=OptionReqType.QUOTE,
         root="AAPL",
         exp=datetime.date(2022, 7, 15),
-        strike=140000,
+        strike=140,
         right=OptionRight.CALL,
         date_range=DateRange(
             datetime.date(2022, 7, 4), datetime.date(2022, 7, 8)
@@ -62,7 +62,7 @@ def test_hist_option_trades(tc: ThetaClient):
         req=OptionReqType.TRADE,
         root="AAPL",
         exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
-        strike=140000,
+        strike=140,
         right=OptionRight.CALL,
         date_range=DateRange.from_days(7),
         progress_bar=True,
@@ -78,7 +78,7 @@ def test_hist_option_open_interest(tc: ThetaClient):
         req=OptionReqType.OPEN_INTEREST,
         root="AAPL",
         exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
-        strike=140000,
+        strike=140,
         right=OptionRight.CALL,
         date_range=DateRange.from_days(7),
         progress_bar=True,
@@ -99,12 +99,15 @@ def test_get_expirations(tc: ThetaClient):
 def test_get_strikes_error(tc: ThetaClient):
     """Ensure that an invalid strike listing request raises."""
     with pytest.raises(thetadata.ResponseError) as e_info:
-        res = tc.get_strikes(root="BDX", exp="20220601")
+        res = tc.get_strikes(root="BDX", exp=datetime.date(2022, 6, 1))
 
 
 def test_get_strikes(tc: ThetaClient):
     """Test a strike listing request."""
-    res = tc.get_strikes(root="AAPL", exp="20220429")
+    res = tc.get_strikes(
+        root="AAPL",
+        exp=datetime.date(2022, 4, 29),
+    )
     print(res)
     assert isinstance(res, Series)
     assert len(res.index) > 0
@@ -124,7 +127,7 @@ def test_get_last(tc: ThetaClient):
         req=OptionReqType.QUOTE,
         root="AAPL",
         exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
-        strike=140000,
+        strike=140,
         right=OptionRight.CALL,
     )
     print(res)
