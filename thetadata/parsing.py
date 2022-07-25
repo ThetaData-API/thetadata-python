@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame, Series
 from .exceptions import ResponseError
-from .enums import _DataType, MessageType
+from .enums import DataType, MessageType
 
 
 @dataclass
@@ -98,6 +98,9 @@ _pt_to_price_mul = [
     1000000000.0,
 ]
 
+# Vectorized function that maps price types to price multipliers
+_to_price_mul = np.vectorize(lambda pt: _pt_to_price_mul[pt], otypes=[float])
+
 
 class TickBody:
     """Represents the body returned on Terminal calls that deal with ticks."""
@@ -109,24 +112,20 @@ class TickBody:
         self.ticks: DataFrame = ticks
 
     @classmethod
-    def parse(
-        cls, header: Header, data: bytes, progress_bar: bool = False
-    ) -> TickBody:
+    def parse(cls, header: Header, data: bytearray) -> TickBody:
         """Parse binary body data into an object.
 
         :param header: parsed header data
         :param data: the binary response body
-        :param: progress_bar: Print a progress bar displaying progress.
         """
         assert (
             len(data) == header.size
         ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
+        assert isinstance(
+            data, bytearray
+        ), f"Expected data to be bytearray type. Got {type(data)}"
         _check_body_errors(header, data)
 
-        # avoid copying body data when slicing
-        data = memoryview(data)
-
-        # parse ticks
         n_cols = header.format_len
         n_ticks = int(header.size / (header.format_len * 4))
 
@@ -135,39 +134,22 @@ class TickBody:
         for ci in range(n_cols):
             int_ = int.from_bytes(data[ci * 4 : ci * 4 + 4], "big")
             format_tick_codes.append(int_)
-        format: list[_DataType] = list(
-            map(lambda code: _DataType.from_code(code), format_tick_codes)
+        format: list[DataType] = list(
+            map(lambda code: DataType.from_code(code), format_tick_codes)
         )
 
         # initialize empty dataframe w/ format columns
         df = pd.DataFrame(columns=format)
 
-        try:
-            price_type_idx = df.columns.get_loc(_DataType.PRICE_TYPE)
-        except KeyError:
-            price_type_idx = None
-
         # parse the rest of the ticks
-        ticks = np.empty((n_ticks, n_cols))
-        # TODO: multithread processing
-        for tn in tqdm(
-            range(1, n_ticks), desc="Processing", disable=not progress_bar
-        ):
-            # the first byte of the tnth tick
-            tick_offset = tn * n_cols * 4
-            tick = np.empty(n_cols)
-            for ci in range(n_cols):
-                # parse int
-                int_offset = tick_offset + ci * 4
-                int_ = int.from_bytes(data[int_offset : int_offset + 4], "big")
-                # map price types to price multipliers
-                tick[ci] = (
-                    _pt_to_price_mul[int_]
-                    if price_type_idx is not None and price_type_idx == ci
-                    else int_
-                )
-
-            ticks[tn - 1] = tick
+        # 4 byte integers w/ big endian order
+        dtype = np.dtype("int32").newbyteorder(">")
+        ticks = (
+            np.frombuffer(data, dtype=dtype, offset=(header.format_len * 4))
+            .reshape((n_ticks - 1), n_cols)
+            .byteswap()  # force native byte order
+            .newbyteorder()  # ^^
+        )
 
         # load ticks into DataFrame
         df = pd.DataFrame(ticks, columns=df.columns, copy=False)
@@ -181,27 +163,29 @@ class TickBody:
 
         :param df: The DataFrame to modify in-place.
         """
-        # remove trailing null tick
+        # remove trailing null tick if it exists
         last_row = df.tail(1)
         zeroes = last_row.squeeze() == 0
         if zeroes.all():
-            print(f"Dropping {last_row=}")
+            # print(f"Dropping {last_row=}")
             df.drop(last_row.index, inplace=True)
 
-        if _DataType.PRICE_TYPE in df.columns:
-            # multiply prices by price multipliers that are now stored in
-            # the PRICE_TYPE col
+        if DataType.PRICE_TYPE in df.columns:
+            # replace price type column with price multipliers
+            df[DataType.PRICE_TYPE] = _to_price_mul(df[DataType.PRICE_TYPE])
+
+            # multiply prices by price multipliers
             for col in df.columns:
                 if col.is_price():
-                    df[col] *= df[_DataType.PRICE_TYPE]
+                    df[col] *= df[DataType.PRICE_TYPE]
 
             # remove price type column
-            del df[_DataType.PRICE_TYPE]
+            del df[DataType.PRICE_TYPE]
 
         # convert date ints to datetime
-        if _DataType.DATE in df.columns:
-            df[_DataType.DATE] = pd.to_datetime(
-                df[_DataType.DATE], format="%Y%m%d"
+        if DataType.DATE in df.columns:
+            df[DataType.DATE] = pd.to_datetime(
+                df[DataType.DATE], format="%Y%m%d"
             )
 
 
@@ -215,14 +199,11 @@ class ListBody:
         self.lst: Series = lst
 
     @classmethod
-    def parse(
-        cls, header: Header, data: bytes, progress_bar: bool = False
-    ) -> ListBody:
+    def parse(cls, header: Header, data: bytes) -> ListBody:
         """Parse binary body data into an object.
 
         :param header: parsed header data
         :param data: the binary response body
-        :param: progress_bar: Print a progress bar displaying progress.
         """
         assert (
             len(data) == header.size

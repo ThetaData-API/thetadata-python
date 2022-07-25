@@ -58,7 +58,7 @@ class ThetaClient:
         finally:
             self._server.close()
 
-    def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytes:
+    def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytearray:
         """Wait for a response from the Terminal.
         :param n_bytes:       The number of bytes to receive.
         :param progress_bar:  Print a progress bar displaying download progress.
@@ -80,7 +80,7 @@ class ThetaClient:
             part = self._server.recv(PART_SIZE)
             buffer[i : i + PART_SIZE] = part
 
-        return bytes(buffer)
+        return buffer
 
     def get_hist_option(
         self,
@@ -123,9 +123,7 @@ class ThetaClient:
 
         # parse response body
         body_data = self._recv(header.size, progress_bar=progress_bar)
-        body: TickBody = TickBody.parse(
-            header, body_data, progress_bar=progress_bar
-        )
+        body: TickBody = TickBody.parse(header, body_data)
 
         return body.ticks
 
