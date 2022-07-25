@@ -8,6 +8,7 @@ from thetadata import (
     OptionRight,
     DateRange,
     SecType,
+    DataType,
 )
 import pandas as pd
 from pandas import DataFrame, Series
@@ -106,7 +107,7 @@ def test_get_strikes(tc: ThetaClient):
     """Test a strike listing request."""
     res = tc.get_strikes(
         root="AAPL",
-        exp=datetime.date(2022, 4, 29),
+        exp=datetime.date(2022, 7, 29),
     )
     print(res)
     assert isinstance(res, Series)

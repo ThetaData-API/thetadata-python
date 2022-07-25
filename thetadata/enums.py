@@ -9,7 +9,7 @@ from .exceptions import EnumParseError
 
 
 @enum.unique
-class _DataType(enum.Enum):
+class DataType(enum.Enum):
     """Codes used in the format tick to ID the data in the body ticks."""
 
     DATE = (0, False)
@@ -97,7 +97,7 @@ class _DataType(enum.Enum):
     LESS_AMOUNT = (226, True)
 
     @classmethod
-    def from_code(cls, code: int) -> _DataType:
+    def from_code(cls, code: int) -> DataType:
         """Create a DataType by its associated code.
 
         :raises EnumParseError: If the code does not match a DataType
