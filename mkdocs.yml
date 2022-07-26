@@ -15,6 +15,10 @@ markdown_extensions:
       anchor_linenums: true
       auto_title: true
   - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.superfences 
 
 
