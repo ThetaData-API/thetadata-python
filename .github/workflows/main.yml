@@ -2,8 +2,6 @@ name: Continuous Deployment
 
 on:
   push:
-    branches:
-      - release
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -18,22 +16,21 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # TODO: Fix tests and uncomment
-      # - name: Download the Terminal
-      #   run: |
-      #     wget --output-document ThetaTerminal.jar https://www.dropbox.com/s/nhre458ha5c7jd5/ThetaTerminal.jar?dl=1
-      # - name: Run the Terminal
-      #   run: |
-      #     sudo java -jar ThetaTerminal.jar $USERNAME $PASSWORD &
-      #   env:
-      #     USERNAME: ${{ secrets.TERMINAL_USERNAME }}
-      #     PASSWORD: ${{ secrets.TERMINAL_PASSWORD }}
-      # - name: Upgrade pip
-      #   run: pip install --upgrade pip
-      # - name: Install dependencies
-      #   run: pip install ".[tests]"
-      # - name: Test
-      #   run: python -m pytest .
+      - name: Download the Terminal
+        run: |
+          wget --output-document ThetaTerminal.jar https://www.dropbox.com/s/nhre458ha5c7jd5/ThetaTerminal.jar?dl=1
+      - name: Run the Terminal
+        run: |
+          sudo java -jar ThetaTerminal.jar $USERNAME $PASSWORD &
+        env:
+          USERNAME: ${{ secrets.TERMINAL_USERNAME }}
+          PASSWORD: ${{ secrets.TERMINAL_PASSWORD }}
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+      - name: Install dependencies
+        run: pip install ".[tests]"
+      - name: Test
+        run: python -m pytest .
 
   build-docs:
     runs-on: ubuntu-latest
@@ -45,6 +42,7 @@ jobs:
         run: mkdocs build
 
   deploy-pypi:
+    if: startsWith(github.ref, 'refs/tags') # tagged release
     needs: [test, build-docs]
     runs-on: ubuntu-latest
     steps:
@@ -62,6 +60,7 @@ jobs:
           verbose: true
 
   deploy-docs:
+    if: startsWith(github.ref, 'refs/tags') # tagged release
     needs: [test, deploy-pypi]
     runs-on: ubuntu-latest
     steps:
