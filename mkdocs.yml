@@ -2,9 +2,20 @@ site_name: Theta Data Python Documentation
 
 theme:
   name: material
-  palette:
-    scheme: slate
   logo: logo.png
+  palette:
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: indigo
+
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
 
 repo_url: https://github.com/ThetaData-API/PythonAPI
 repo_name: ThetaData-API/PythonAPI
