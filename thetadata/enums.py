@@ -76,10 +76,10 @@ class DataType(enum.Enum):
     DUAL_GAMMA = (184, True)
 
     # OHLC
-    OPEN = (191, False)
-    HIGH = (192, False)
-    LOW = (193, False)
-    CLOSE = (194, False)
+    OPEN = (191, True)
+    HIGH = (192, True)
+    LOW = (193, True)
+    CLOSE = (194, True)
 
     # IMPLIED VOLATILITY
     IMPLIED_VOL = (201, False)

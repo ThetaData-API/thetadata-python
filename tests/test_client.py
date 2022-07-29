@@ -15,6 +15,24 @@ from thetadata import (
 from . import tc
 
 
+def test_end_of_day(tc: ThetaClient):
+    """Test an EOD historical request."""
+    res = tc.get_hist_option(
+        req=OptionReqType.EOD,
+        root="AAPL",
+        exp=datetime.date(2022, 7, 15),
+        strike=140,
+        right=OptionRight.CALL,
+        date_range=DateRange(
+            datetime.date(2022, 7, 6), datetime.date(2022, 7, 15)
+        ),
+        progress_bar=True,
+    )
+    print(res)
+    assert isinstance(res, DataFrame)
+    assert len(res.index) > 0
+
+
 def test_hist_option_quotes_small(tc: ThetaClient):
     """Test a historical option request."""
     res = tc.get_hist_option(
