@@ -1,4 +1,6 @@
 """Contains various tests for the ThetaClient class."""
+import pandas as pd
+from pandas import DataFrame, Series
 import pytest
 import datetime
 import thetadata
@@ -10,16 +12,7 @@ from thetadata import (
     SecType,
     DataType,
 )
-import pandas as pd
-from pandas import DataFrame, Series
-
-
-@pytest.fixture
-def tc():
-    """Generate a ThetaClient connected to the Terminal."""
-    client = ThetaClient(timeout=15)
-    with client.connect():
-        yield client
+from . import tc
 
 
 def test_hist_option_quotes_small(tc: ThetaClient):
@@ -134,3 +127,9 @@ def test_get_last(tc: ThetaClient):
     print(res)
     assert isinstance(res, DataFrame)
     assert len(res.index) == 1
+
+
+@pytest.mark.skip(reason="Cannot automate restart yet")
+def test_kill_method(tc: ThetaClient):
+    """Test killing the Terminal process by calling client.kill()"""
+    tc.kill()

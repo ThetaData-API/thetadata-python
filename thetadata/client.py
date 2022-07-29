@@ -82,6 +82,15 @@ class ThetaClient:
 
         return buffer
 
+    def kill(self) -> None:
+        """Remotely kill the Terminal process.
+
+        All subsequent requests will timeout until the Terminal is restarted.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        kill_msg = f"ID=0&MSG_CODE={MessageType.KILL.value}\n"
+        self._server.sendall(kill_msg.encode("utf-8"))
+
     def get_hist_option(
         self,
         req: OptionReqType,

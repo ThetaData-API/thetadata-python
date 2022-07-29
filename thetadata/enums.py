@@ -136,6 +136,7 @@ class MessageType(enum.Enum):
     SET_SYMS = 105
     CANT_CHANGE_SYMS = 106
     CHANGED_SYMS = 107
+    KILL = 108
 
     # Client data
     HIST = 200
