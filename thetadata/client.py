@@ -71,11 +71,12 @@ class ThetaClient:
 
         buffer = bytearray(n_bytes)
         bytes_downloaded = 0
-        for i in tqdm(
-            range(0, n_bytes, PART_SIZE),
-            desc="Downloading",
-            disable=not progress_bar,
-        ):
+
+        # tqdm disable=True is slow bc it still calls __new__, which takes nearly 4ms
+        range_ = range(0, n_bytes, PART_SIZE)
+        iterable = tqdm(range_, desc="Downloading") if progress_bar else range_
+
+        for i in iterable:
             bytes_downloaded += PART_SIZE
             part = self._server.recv(PART_SIZE)
             buffer[i : i + PART_SIZE] = part
@@ -134,7 +135,7 @@ class ThetaClient:
         body_data = self._recv(header.size, progress_bar=progress_bar)
         body: TickBody = TickBody.parse(header, body_data)
 
-        return body.ticks
+        return body.to_dataframe()
 
     # LISTING DATA
 
@@ -225,4 +226,4 @@ class ThetaClient:
         header: Header = Header.parse(self._server.recv(20))
         body: TickBody = TickBody.parse(header, self._recv(header.size))
 
-        return body.ticks
+        return body.to_dataframe()
