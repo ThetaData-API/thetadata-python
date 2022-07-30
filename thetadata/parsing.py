@@ -105,15 +105,16 @@ _to_price_mul = np.vectorize(lambda pt: _pt_to_price_mul[pt], otypes=[float])
 class TickBody:
     """Represents the body returned on Terminal calls that deal with ticks."""
 
-    def __init__(self, ticks: DataFrame):
-        assert isinstance(
-            ticks, DataFrame
+    def __init__(self, format_tick: list[DataType], body_ticks: np.ndarray):
+        assert isinstance(format_tick, list) and isinstance(
+            body_ticks, np.ndarray
         ), "Cannot initialize body bc ticks is not a DataFrame"
-        self.ticks: DataFrame = ticks
+        self.format_tick: list[DataType] = format_tick
+        self.body_ticks: np.ndarray = body_ticks
 
     @classmethod
     def parse(cls, header: Header, data: bytearray) -> TickBody:
-        """Parse binary body data into an object.
+        """Efficiently parse binary tick data into an object.
 
         :param header: parsed header data
         :param data: the binary response body
@@ -130,16 +131,10 @@ class TickBody:
         n_ticks = int(header.size / (header.format_len * 4))
 
         # parse format tick
-        format_tick_codes = []
+        format: list[DataType] = []
         for ci in range(n_cols):
             int_ = int.from_bytes(data[ci * 4 : ci * 4 + 4], "big")
-            format_tick_codes.append(int_)
-        format: list[DataType] = list(
-            map(lambda code: DataType.from_code(code), format_tick_codes)
-        )
-
-        # initialize empty dataframe w/ format columns
-        df = pd.DataFrame(columns=format)
+            format.append(DataType.from_code(int_))
 
         # parse the rest of the ticks
         # 4 byte integers w/ big endian order
@@ -151,11 +146,20 @@ class TickBody:
             .newbyteorder()  # ^^
         )
 
-        # load ticks into DataFrame
-        df = pd.DataFrame(ticks, columns=df.columns, copy=False)
-        cls._post_process(df)
+        return cls(format_tick=format, body_ticks=ticks)
 
-        return cls(ticks=df)
+    def to_dataframe(self) -> DataFrame:
+        """Load this tick data into a pandas DataFrame and post process.
+
+        Post processing modifies the columns of data w/ various quality-of-life
+        improvements.
+        """
+        # load ticks into DataFrame
+        df = pd.DataFrame(
+            self.body_ticks, columns=self.format_tick, copy=False
+        )
+        self._post_process(df)
+        return df
 
     @classmethod
     def _post_process(cls, df: DataFrame) -> None:
