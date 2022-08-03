@@ -3,7 +3,7 @@ from datetime import date
 from thetadata import ThetaClient, OptionReqType, OptionRight
 
 
-def first_request() -> pd.DataFrame:
+def get_last() -> pd.DataFrame:
 
     # Create a ThetaClient
     client = ThetaClient()
@@ -24,5 +24,5 @@ def first_request() -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    quote = first_request()
+    quote = get_last()
     print(quote)

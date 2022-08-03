@@ -1,42 +1,49 @@
 In this section you'll learn how to get started with the code in this project.
 
 # Quickstart
-In order to use this API you must run the **Theta Terminal** alongside your application. Please see the [Theta Terminal setup guide](https://www.thetadata.net/terminal-setup) for more information.
 
 ## Installation
+
+In order to use this API you must run the **Theta Terminal** alongside your application.
+Please see the [Theta Terminal setup guide](https://www.thetadata.net/terminal-setup) for more information.
+After the Terminal has been installed,
 
 - Install Python 3.
 - Using pip, Python's package manager, open a terminal and run
 `pip install thetadata`
 
-## Get last (our first request)
+## Free tier
 
-With the **Theta Terminal** connected and the API installed, you're now free
-to `import thetadata` in any Python script you'd like!
+### Get end of day data
 
-Here's how you might make a request:
+With the **Theta Terminal** connected and the API installed, you can now
+`import thetadata` in any Python script you'd like!
 
-=== "first_request.py"
+Here's how you may make your first (**free**) request:
+
+=== "end_of_day.py"
 
     ```python
-    --8<-- "docs/first_request.py"
+    --8<-- "docs/end_of_day.py"
     ```
 
 === "Output"
 
     ```bash
-    > python first_request.py
-       DataType.MS_OF_DAY  DataType.BID_SIZE  ...  DataType.ASK_EXCHANGE  DataType.DATE
-    0            57599954                 84  ...                     50     2022-07-26
-
-    [1 rows x 10 columns]
+    > python end_of_day.py                                                                                                                                                                         1 ✘ 
+       DataType.OPEN  DataType.HIGH  DataType.LOW  DataType.CLOSE  DataType.VOLUME  DataType.COUNT DataType.DATE
+    0          13.25          13.25         10.15           10.20              214              21    2022-07-18
+    1          10.90          12.95         10.09           12.93               62              20    2022-07-19
+    2          14.05          15.04         14.05           15.04               16               7    2022-07-20
+    3          14.45          16.64         14.05           16.36              142              44    2022-07-21
+    4          17.06          17.06         15.00           15.32               49               9    2022-07-22
     ```
 
     > *What am I looking at?*
 
 ### Understanding the output
 
-The return type of `get_last_option` is a `DataFrame`, a core datatype in the **pandas** package.
+The return type of `end_of_day` is a `DataFrame`, a core datatype in the **pandas** package.
 
 > [pandas](https://pandas.pydata.org/) is a fast, powerful, flexible and easy to use open source data
 > analysis and manipulation tool, built on top of the Python programming language.
@@ -65,18 +72,16 @@ The above example returned a `DataFrame`. Let's see how we can use it to process
 
     ```bash
     > python script.py
-    Index([    DataType.MS_OF_DAY,      DataType.BID_SIZE, DataType.BID_CONDITION,
-                     DataType.BID,  DataType.BID_EXCHANGE,      DataType.ASK_SIZE,
-           DataType.ASK_CONDITION,           DataType.ASK,  DataType.ASK_EXCHANGE,
-                    DataType.DATE],
-          dtype='object')
-    bid_price=13.1
+    Index([  DataType.OPEN,   DataType.HIGH,    DataType.LOW,  DataType.CLOSE,
+       DataType.VOLUME,  DataType.COUNT,   DataType.DATE],
+      dtype='object')
+    close_price=10.2
     ```
 
-    As you can see, the response contains 10 fields (DataFrame *columns*), and
-    the bid price of this request is $13.10.
+    As you can see, the response contains 7 fields (DataFrame *columns*), and
+    the close price of the first *row* of this data (which represents July 18, 2022) is $13.10.
 
-Congratulations, you've made your first request!
+Congratulations, you've made and processed your first request!
 
 ## List roots
 
@@ -130,6 +135,28 @@ The above example returned a `Series`. Let's see how we can use it to process ou
     len(filtered)=530
     ```
 
-Nice! You are now familiar the `Series` and `DataFrame` objects, the return types of our data requests!
+## Get last option
 
-For more details on the pandas API, please see the [official pandas user guide](https://pandas.pydata.org/docs/user_guide/index.html).
+Now let's try a low-latency request for the most recent option data available:
+
+=== "get_last.py"
+
+    ```python
+    --8<-- "docs/get_last.py"
+    ```
+
+=== "Output"
+
+    ```bash
+    > python get_last.py
+       DataType.MS_OF_DAY  DataType.BID_SIZE  DataType.BID_CONDITION  DataType.BID  DataType.BID_EXCHANGE  DataType.ASK_SIZE  DataType.ASK_CONDITION  DataType.ASK  DataType.ASK_EXCHANGE DataType.DATE
+    0            57599874                 52                       7         20.05                     50                 68                       7         20.35                     50    2022-08-02
+    ```
+
+## What's next?
+
+Nice! You are now familiar the `Series` and `DataFrame` objects, the return types of our data requests.
+Using the skills learned in these tutorials, you're well on your way to mastering the entire `thetadata` package.
+Explore other requests at your disposal on the API Reference page!
+
+For more details on the `pandas` API, please see the [official pandas user guide](https://pandas.pydata.org/docs/user_guide/index.html).

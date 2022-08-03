@@ -12,7 +12,7 @@ def end_of_day() -> pd.DataFrame:
     with client.connect():
 
         # Make the request
-        response = client.get_hist_option(
+        data = client.get_hist_option(
             req=OptionReqType.EOD,
             root="AAPL",
             exp=date(2022, 8, 12),
@@ -21,9 +21,9 @@ def end_of_day() -> pd.DataFrame:
             date_range=DateRange(date(2022, 7, 18), date(2022, 7, 22)),
         )
 
-    return response
+    return data
 
 
 if __name__ == "__main__":
-    response = end_of_day()
-    print(response)
+    data = end_of_day()
+    print(data)
