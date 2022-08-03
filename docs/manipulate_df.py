@@ -1,21 +1,21 @@
 import pandas as pd
 from thetadata import DataType
-from .first_request import first_request
+from .end_of_day import end_of_day
 
 
 def main():
-    # get the quote from the previous example
-    quote: pd.DataFrame = first_request()
+    # get the data from the previous example
+    data: pd.DataFrame = end_of_day()
 
     # print all datatypes in the response
-    print(f"{quote.columns}")
+    print(f"{data.columns}")
 
     # get the first row in the DataFrame (our requested data)
-    row = quote.iloc[0]
+    row = data.iloc[0]
 
-    # print just the bid price
-    bid_price = row[DataType.BID]
-    print(f"{bid_price=}")
+    # print just the close price
+    close_price = row[DataType.CLOSE]
+    print(f"{close_price=}")
 
 
 if __name__ == "__main__":
