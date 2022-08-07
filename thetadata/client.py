@@ -67,20 +67,22 @@ class ThetaClient:
         assert self._server is not None, _NOT_CONNECTED_MSG
 
         # receive body data in parts
-        PART_SIZE = 4096  # 4 KiB recommended for most machines
+        MAX_PART_SIZE = 4096  # 4 KiB recommended for most machines
 
         buffer = bytearray(n_bytes)
         bytes_downloaded = 0
 
         # tqdm disable=True is slow bc it still calls __new__, which takes nearly 4ms
-        range_ = range(0, n_bytes, PART_SIZE)
+        range_ = range(0, n_bytes, MAX_PART_SIZE)
         iterable = tqdm(range_, desc="Downloading") if progress_bar else range_
 
         for i in iterable:
-            bytes_downloaded += PART_SIZE
-            part = self._server.recv(PART_SIZE)
-            buffer[i : i + PART_SIZE] = part
+            part_size = min(MAX_PART_SIZE, n_bytes - bytes_downloaded)
+            bytes_downloaded += part_size
+            part = self._server.recv(part_size)
+            buffer[i : i + part_size] = part
 
+        assert bytes_downloaded == n_bytes
         return buffer
 
     def kill(self) -> None:
