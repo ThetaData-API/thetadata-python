@@ -82,7 +82,10 @@ class DataType(enum.Enum):
     CLOSE = (194, True)
 
     # IMPLIED VOLATILITY
-    IMPLIED_VOL = (201, False)
+    IMPLIED_VOL = (201, True)
+    BID_IMPLIED_VOL = (202, True)
+    ASK_IMPLIED_VOL = (203, True)
+    UNDERLYING_PRICE = (204, True)
 
     # OTHER
     RATIO = (211, True)
