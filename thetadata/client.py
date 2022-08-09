@@ -91,7 +91,7 @@ class ThetaClient:
         All subsequent requests will timeout until the Terminal is restarted.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
-        kill_msg = f"ID=0&MSG_CODE={MessageType.KILL.value}\n"
+        kill_msg = f"MSG_CODE={MessageType.KILL.value}\n"
         self._server.sendall(kill_msg.encode("utf-8"))
 
     def get_hist_option(
@@ -126,8 +126,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
 
         # send request
-        request_id = 0
-        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        hist_msg = f"MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
@@ -150,8 +149,7 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
-        req_id = 1
-        out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&ID={req_id}&root={root}\n"
+        out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&root={root}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
@@ -169,8 +167,7 @@ class ThetaClient:
         assert self._server is not None, _NOT_CONNECTED_MSG
         assert isinstance(exp, date)
         exp_fmt = _format_date(exp)
-        req_id = 1
-        out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&ID={req_id}&root={root}&exp={exp_fmt}\n"
+        out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
@@ -185,8 +182,7 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
-        req_id = 1
-        out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&ID={req_id}&sec={sec.value}\n"
+        out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&sec={sec.value}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(self._server.recv(20))
         body = ListBody.parse(header, self._recv(header.size))
@@ -220,8 +216,7 @@ class ThetaClient:
         exp_fmt = _format_date(exp)
 
         # send request
-        request_id = 0
-        hist_msg = f"ID={request_id}&MSG_CODE={MessageType.LAST.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        hist_msg = f"MSG_CODE={MessageType.LAST.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response
