@@ -139,6 +139,8 @@ The above example returned a `Series`. Let's see how we can use it to process ou
 
 Now let's try a low-latency request for the most recent option data available:
 
+Note that *as of now*, live data requests will only work during trading hours!
+
 === "get_last.py"
 
     ```python

@@ -15,7 +15,7 @@ def get_last() -> pd.DataFrame:
         quote = client.get_last_option(
             req=OptionReqType.QUOTE,
             root="AAPL",
-            exp=date(2022, 8, 12),
+            exp=date(2022, 9, 16),
             strike=140.00,
             right=OptionRight.CALL,
         )
