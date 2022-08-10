@@ -1,4 +1,5 @@
 """Contains tests for the tutorial section of the documentation."""
+import pytest
 import docs
 from docs.get_last import get_last
 from docs.list_roots import get_roots
@@ -18,6 +19,9 @@ def test_docs_list_roots():
     manipulate_series.main()
 
 
-def test_docs_first_req():
-    """Test the first tutorial."""
+@pytest.mark.skip(
+    reason="Live data currently only works during trading hours."
+)  # TODO: remove
+def test_docs_get_last():
+    """Test the live data tutorial."""
     get_last()
