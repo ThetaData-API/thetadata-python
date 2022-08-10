@@ -7,14 +7,13 @@ import socket
 from tqdm import tqdm
 import pandas as pd
 
+from . import exceptions
 from .enums import *
 from .parsing import (
     Header,
     TickBody,
     ListBody,
 )
-
-from .exceptions import ResponseError
 
 _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 
@@ -130,13 +129,13 @@ class ThetaClient:
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
-        header: Header = Header.parse(self._server.recv(20))
+        header_data = self._server.recv(20)
+        header: Header = Header.parse(hist_msg, header_data)
 
         # parse response body
         body_data = self._recv(header.size, progress_bar=progress_bar)
-        body: TickBody = TickBody.parse(header, body_data)
-
-        return body.to_dataframe()
+        body: DataFrame = TickBody.parse(hist_msg, header, body_data)
+        return body
 
     # LISTING DATA
 
@@ -151,8 +150,8 @@ class ThetaClient:
         assert self._server is not None, _NOT_CONNECTED_MSG
         out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&root={root}\n"
         self._server.send(out.encode("utf-8"))
-        header = Header.parse(self._server.recv(20))
-        body = ListBody.parse(header, self._recv(header.size))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
 
     def get_strikes(self, root: str, exp: date) -> pd.Series:
@@ -169,8 +168,8 @@ class ThetaClient:
         exp_fmt = _format_date(exp)
         out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
         self._server.send(out.encode("utf-8"))
-        header = Header.parse(self._server.recv(20))
-        body = ListBody.parse(header, self._recv(header.size))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size))
         return body.lst
 
     def get_roots(self, sec: SecType) -> pd.Series:
@@ -184,8 +183,8 @@ class ThetaClient:
         assert self._server is not None, _NOT_CONNECTED_MSG
         out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&sec={sec.value}\n"
         self._server.send(out.encode("utf-8"))
-        header = Header.parse(self._server.recv(20))
-        body = ListBody.parse(header, self._recv(header.size))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size))
         return body.lst
 
     # LIVE DATA
@@ -220,7 +219,9 @@ class ThetaClient:
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response
-        header: Header = Header.parse(self._server.recv(20))
-        body: TickBody = TickBody.parse(header, self._recv(header.size))
+        header: Header = Header.parse(hist_msg, self._server.recv(20))
+        body: DataFrame = TickBody.parse(
+            hist_msg, header, self._recv(header.size)
+        )
 
-        return body.to_dataframe()
+        return body

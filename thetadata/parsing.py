@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 from pandas import DataFrame, Series
-from .exceptions import ResponseError
+from .exceptions import ResponseError, NoData, ResponseParseError
 from .enums import DataType, MessageType
 
 
@@ -24,7 +24,22 @@ class Header:
     size: int
 
     @classmethod
-    def parse(cls, data: bytes) -> Header:
+    def parse(cls, request: str, data: bytes) -> Header:
+        """Parse binary header data into an object.
+
+        :param request: the request that returned the header data
+        :param data: raw header data, 20 bytes long
+        :raises ResponseParseError: if parsing failed
+        """
+        try:
+            return cls._parse(data)
+        except Exception as e:
+            raise ResponseParseError(
+                f"Failed to parse header for request: {request}. Please send this error to support."
+            ) from e
+
+    @classmethod
+    def _parse(cls, data: bytes) -> Header:
         """Parse binary header data into an object.
 
         :param data: raw header data, 20 bytes long
@@ -66,12 +81,16 @@ class Header:
 def _check_body_errors(header: Header, body_data: bytes):
     """Check for errors from the Terminal.
 
+    :raises NoData: if the server does not contain data for the request.
     :raises ResponseError: if the header indicates an error, containing a
                            helpful error message.
     """
     if header.message_type == MessageType.ERROR:
         msg = body_data.decode("ascii")
-        raise ResponseError(msg)
+        if "no data" in msg.lower():
+            raise NoData(msg)
+        else:
+            raise ResponseError(msg)
 
 
 # map price types to price multipliers
@@ -113,20 +132,33 @@ class TickBody:
         self.body_ticks: np.ndarray = body_ticks
 
     @classmethod
-    def parse(cls, header: Header, data: bytearray) -> TickBody:
-        """Efficiently parse binary tick data into an object.
+    def parse(cls, request: str, header: Header, data: bytearray) -> DataFrame:
+        """Efficiently parse binary tick data.
 
+        :param request: the request that returned the body data
         :param header: parsed header data
         :param data: the binary response body
+        :return: a processed pandas dataframe
+        :raises ResponseParseError: if parsing failed
         """
-        assert (
-            len(data) == header.size
-        ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
         assert isinstance(
             data, bytearray
         ), f"Expected data to be bytearray type. Got {type(data)}"
         _check_body_errors(header, data)
+        try:
+            tbody = cls._parse(header, data)
+            df = tbody._to_dataframe()
+            return df
+        except Exception as e:
+            raise ResponseParseError(
+                f"Failed to parse body for request: {request}. Please send this error to support."
+            ) from e
 
+    @classmethod
+    def _parse(cls, header: Header, data: bytearray) -> TickBody:
+        assert (
+            len(data) == header.size
+        ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
         n_cols = header.format_len
         n_ticks = int(header.size / (header.format_len * 4))
 
@@ -148,7 +180,7 @@ class TickBody:
 
         return cls(format_tick=format, body_ticks=ticks)
 
-    def to_dataframe(self) -> DataFrame:
+    def _to_dataframe(self) -> DataFrame:
         """Load this tick data into a pandas DataFrame and post process.
 
         Post processing modifies the columns of data w/ various quality-of-life
@@ -203,18 +235,37 @@ class ListBody:
         self.lst: Series = lst
 
     @classmethod
-    def parse(cls, header: Header, data: bytes) -> ListBody:
+    def parse(
+        cls, request: str, header: Header, data: bytes, dates: bool = False
+    ) -> ListBody:
         """Parse binary body data into an object.
 
+        :param request: the request that returned the header data
         :param header: parsed header data
         :param data: the binary response body
+        :param dates: whether or not to parse the data as date objects
+        :raises ResponseParseError: if parsing failed
         """
+        _check_body_errors(header, data)
+        try:
+            return cls._parse(header, data, dates)
+        except Exception as e:
+            raise ResponseParseError(
+                f"Failed to parse header for request: {request}. Please send this error to support."
+            ) from e
+
+    @classmethod
+    def _parse(
+        cls, header: Header, data: bytes, dates: bool = False
+    ) -> ListBody:
         assert (
             len(data) == header.size
         ), f"Cannot parse body with {len(data)} bytes. Expected {header.size} bytes."
-        _check_body_errors(header, data)
 
         lst = data.decode("ascii").split(",")
         lst = pd.Series(lst, copy=False)
+
+        if dates:
+            lst = pd.to_datetime(lst, format="%Y%m%d")
 
         return cls(lst=lst)

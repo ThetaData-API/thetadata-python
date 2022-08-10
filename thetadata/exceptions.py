@@ -3,8 +3,12 @@ import enum
 from typing import Any
 
 
-class EnumParseError(Exception):
-    """Raise when a value cannot be parsed into an associated enum member."""
+class ResponseParseError(Exception):
+    """Raised if the API failed to parse a Terminal response."""
+
+
+class _EnumParseError(Exception):
+    """Raised when a value cannot be parsed into an associated enum member."""
 
     def __init__(self, value: Any, enm: Any):
         """Create a new `EnumParseError`
@@ -20,4 +24,8 @@ class EnumParseError(Exception):
 
 
 class ResponseError(Exception):
-    """Raised if there was an error indicated in the body of a response."""
+    """Raised if there is an error in the body of a response."""
+
+
+class NoData(Exception):
+    """Raised if no data is available for this request."""

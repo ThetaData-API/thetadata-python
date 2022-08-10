@@ -5,7 +5,7 @@ import enum
 from datetime import datetime, date, timedelta
 from dataclasses import dataclass
 
-from .exceptions import EnumParseError
+from . import exceptions
 
 
 @enum.unique
@@ -108,7 +108,7 @@ class DataType(enum.Enum):
         for member in cls:
             if code == member.value[0]:
                 return member
-        raise EnumParseError(code, cls)
+        raise exceptions._EnumParseError(code, cls)
 
     def code(self) -> int:
         """:return: The datatype code associated w this type."""
@@ -167,7 +167,7 @@ class MessageType(enum.Enum):
         for member in cls:
             if code == member.value:
                 return member
-        raise EnumParseError(code, cls)
+        raise exceptions._EnumParseError(code, cls)
 
 
 @enum.unique
