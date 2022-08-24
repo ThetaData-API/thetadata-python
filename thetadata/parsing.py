@@ -183,7 +183,7 @@ class TickBody:
     def _to_dataframe(self) -> DataFrame:
         """Load this tick data into a pandas DataFrame and post process.
 
-        Post processing modifies the columns of data w/ various quality-of-life
+        Post-processing modifies the columns of data w/ various quality-of-life
         improvements.
         """
         # load ticks into DataFrame

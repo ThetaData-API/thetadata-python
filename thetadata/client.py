@@ -14,6 +14,7 @@ from .parsing import (
     TickBody,
     ListBody,
 )
+from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must esetablish a connection first."
 
@@ -31,7 +32,8 @@ def _format_date(dt: date) -> str:
 class ThetaClient:
     """A high-level, blocking client used to fetch market data."""
 
-    def __init__(self, port: int = 11000, timeout: Optional[float] = 10):
+    def __init__(self, port: int = 11000, timeout: Optional[float] = 60,
+                 username: str = None, passwd: str = None, auto_update: bool = True):
         """Construct a client instance to interface with market data.
 
         :param port: The port number specified in the Theta Terminal config
@@ -41,6 +43,10 @@ class ThetaClient:
         self.port: int = port
         self.timeout = timeout
         self._server: Optional[socket.socket] = None  # None while disconnected
+        if username is not None and passwd is not None:
+            check_download(auto_update)
+            launch_terminal("baileydan911@gmail.com", "ihatelag911bq")
+
 
     @contextmanager
     def connect(self):
