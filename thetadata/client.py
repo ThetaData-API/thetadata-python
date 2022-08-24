@@ -1,15 +1,13 @@
 """Module that contains Theta Client class."""
-from typing import Optional, Callable
+from typing import Optional
 from contextlib import contextmanager
-from functools import wraps
-from datetime import datetime, date
+
 import socket
 
 from pandas import DataFrame
 from tqdm import tqdm
 import pandas as pd
 
-from . import exceptions
 from .enums import *
 from .parsing import (
     Header,
@@ -103,7 +101,7 @@ class ThetaClient:
         strike: float,
         right: OptionRight,
         date_range: DateRange,
-        interval_size: int = 60000,
+        interval_size: int = 0,
         progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
@@ -115,7 +113,7 @@ class ThetaClient:
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an option.
         :param date_range:     The dates to fetch.
-        :interval_size:        The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
+        :param interval_size:        The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
         :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
