@@ -1,0 +1,60 @@
+
+name: Deployment No Test
+
+on:
+  push:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: pip install ".[docs]"
+      - name: Build docs
+        run: mkdocs build
+
+  deploy-pypi:
+    if: startsWith(github.ref, 'refs/tags') # tagged release
+    needs: [build-docs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build package
+        run: |
+          pip install --upgrade build
+          python -m build
+      - name: Release to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
+
+  deploy-docs:
+    if: startsWith(github.ref, 'refs/tags') # tagged release
+    needs: [deploy-pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          # TODO: mhausenblas/mkdocs-deploy-gh-pages@nomaterial does not work with this:
+          # pip install ".[docs]"
+          # pip freeze > docs/requirements.txt
+          # I'll manually list dependencies instead
+          echo "mkdocs" >> requirements.txt
+          echo "mkdocstrings[python]" >> requirements.txt
+          echo "mkdocs-material" >> requirements.txt
+      - name: Deploy docs
+        uses: mhausenblas/mkdocs-deploy-gh-pages@master
+        env:
+          PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          REQUIREMENTS: docs/requirements.txt
