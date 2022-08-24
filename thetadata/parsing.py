@@ -208,6 +208,7 @@ class TickBody:
 
         if DataType.PRICE_TYPE in df.columns:
             # replace price type column with price multipliers
+
             df[DataType.PRICE_TYPE] = _to_price_mul(df[DataType.PRICE_TYPE])
 
             # multiply prices by price multipliers

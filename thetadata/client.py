@@ -1,13 +1,13 @@
 """Module that contains Theta Client class."""
-from typing import Optional, Callable
+from typing import Optional
 from contextlib import contextmanager
-from functools import wraps
-from datetime import datetime, date
+
 import socket
+
+from pandas import DataFrame
 from tqdm import tqdm
 import pandas as pd
 
-from . import exceptions
 from .enums import *
 from .parsing import (
     Header,
@@ -101,6 +101,7 @@ class ThetaClient:
         strike: float,
         right: OptionRight,
         date_range: DateRange,
+        interval_size: int = 0,
         progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
@@ -112,6 +113,7 @@ class ThetaClient:
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an option.
         :param date_range:     The dates to fetch.
+        :param interval_size:        The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
         :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
@@ -125,7 +127,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
 
         # send request
-        hist_msg = f"MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        hist_msg = f"MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}&IVL={interval_size}\n"
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
