@@ -28,4 +28,3 @@ def end_of_day() -> pd.DataFrame:
 if __name__ == "__main__":
     data = end_of_day()
     print(data)
-
