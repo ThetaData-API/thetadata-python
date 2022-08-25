@@ -1,15 +1,11 @@
-
-
 import pandas as pd
 from datetime import date
 from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
 
-from thetadata.terminal import launch_terminal, check_download
-
 
 def end_of_day() -> pd.DataFrame:
     # Create a ThetaClient
-    client = ThetaClient(timeout=180, username="testing@thetadata.net", passwd="test22")
+    client = ThetaClient(timeout=180)
 
     # Connect to the Terminal
     with client.connect():
