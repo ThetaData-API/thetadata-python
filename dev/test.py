@@ -9,7 +9,7 @@ from thetadata.terminal import launch_terminal, check_download
 
 def end_of_day() -> pd.DataFrame:
     # Create a ThetaClient
-    client = ThetaClient(timeout=180)
+    client = ThetaClient(timeout=180, username="testing@thetadata.net", passwd="test22")
 
     # Connect to the Terminal
     with client.connect():
