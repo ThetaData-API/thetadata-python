@@ -1,10 +1,6 @@
-
-
 import pandas as pd
 from datetime import date
 from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
-
-from thetadata.terminal import launch_terminal, check_download
 
 
 def end_of_day() -> pd.DataFrame:
