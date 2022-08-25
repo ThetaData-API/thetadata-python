@@ -1,4 +1,6 @@
 """Module that contains Theta Client class."""
+from threading import Thread
+from time import sleep
 from typing import Optional
 from contextlib import contextmanager
 
@@ -45,7 +47,7 @@ class ThetaClient:
         self._server: Optional[socket.socket] = None  # None while disconnected
         if username is not None and passwd is not None:
             check_download(auto_update)
-            launch_terminal("baileydan911@gmail.com", "ihatelag911bq")
+            Thread(target=launch_terminal, args=[username, passwd]).start()
 
 
     @contextmanager
@@ -55,6 +57,7 @@ class ThetaClient:
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
         """
+
         try:
             self._server = socket.socket()
             self._server.connect(("localhost", self.port))
@@ -62,6 +65,7 @@ class ThetaClient:
             yield
         finally:
             self._server.close()
+
 
     def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytearray:
         """Wait for a response from the Terminal.
