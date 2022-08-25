@@ -45,7 +45,7 @@ class ThetaClient:
         self._server: Optional[socket.socket] = None  # None while disconnected
         if username is not None and passwd is not None:
             check_download(auto_update)
-            launch_terminal("baileydan911@gmail.com", "ihatelag911bq")
+            launch_terminal(username, passwd)
 
 
     @contextmanager
