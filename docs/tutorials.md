@@ -4,19 +4,17 @@ In this section you'll learn how to get started with the code in this project.
 
 ## Installation
 
-In order to use this API you must run the **Theta Terminal** alongside your application.
-Please see the [Theta Terminal setup guide](https://www.thetadata.net/terminal-setup) for more information.
-After the Terminal has been installed,
-
 - Install Python 3.
 - Using pip, Python's package manager, open a terminal and run
 `pip install thetadata`
+or
+`python -m pip install thetadata`
 
-## Free tier
+## Free data
 
 ### Get end of day data
 
-With the **Theta Terminal** connected and the API installed, you can now
+With the API installed, you can now
 `import thetadata` in any Python script you'd like!
 
 Here's how you may make your first (**free**) request:
