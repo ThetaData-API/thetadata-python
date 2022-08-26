@@ -10,6 +10,12 @@ In this section you'll learn how to get started with the code in this project.
 or
 `python -m pip install thetadata`
 
+##READ THIS!
+
+You will not be able to use Theta Data unless you instaniate a ThetaClient object with the `username` and `passwd` fields. These examples do not instaniate ThetaClient that way but you should. An example of proper ThetaClient instaniation is as follows:
+
+```client = ThetaClient(username="my_theta_data_email", passwd="my_thetadata_passwd")```
+
 ## Free data
 
 ### Get end of day data
