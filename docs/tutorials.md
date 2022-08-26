@@ -12,7 +12,7 @@ or
 
 ##READ THIS!
 
-You will not be able to use Theta Data unless you instaniate a ThetaClient object with the `username` and `passwd` fields. These examples do not instaniate ThetaClient that way but you should. An example of proper ThetaClient instaniation is as follows:
+You will not be able to use Theta Data unless you instaniate a ThetaClient object with the `username` and `passwd` fields. These examples do not instaniate ThetaClient that way but you should. An example of proper ThetaClient instantiation is:
 
 ```client = ThetaClient(username="my_theta_data_email", passwd="my_thetadata_passwd")```
 
