@@ -244,7 +244,7 @@ class ListBody:
         :param request: the request that returned the header data
         :param header: parsed header data
         :param data: the binary response body
-        :param dates: whether or not to parse the data as date objects
+        :param dates: whether to parse the data as date objects
         :raises ResponseParseError: if parsing failed
         """
         _check_body_errors(header, data)

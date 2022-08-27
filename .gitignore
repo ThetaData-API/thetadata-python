@@ -2,6 +2,7 @@ build/
 dist/
 venv/
 site/
+dev/ThetaTerminal.jar
 *.egg-info/
 
 # Byte-compiled / optimized / DLL files
