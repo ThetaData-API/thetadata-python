@@ -1,4 +1,5 @@
 """Module that contains Theta Client class."""
+import warnings
 from threading import Thread
 from time import sleep
 from typing import Optional
@@ -41,6 +42,14 @@ class ThetaClient:
         :param port: The port number specified in the Theta Terminal config
         :param timeout: The max number of seconds to wait for a response before
             throwing a TimeoutError
+        :param username: Theta Data username / email. When specified with a
+            password, this class will launch the terminal in headless mode.
+        :param passwd: Theta Data password. When specified with a username,
+            this class will launch the terminal in headless mode.
+        :param auto_update: If true, this class will automatically download the
+            latest terminal version each time this class is instantiated. If
+            false, the terminal will use the current jar terminal file. If none
+            exists, it will download the latest version.
         """
         self.port: int = port
         self.timeout = timeout
@@ -48,7 +57,9 @@ class ThetaClient:
         if username is not None and passwd is not None:
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd]).start()
-
+        else:
+            warnings.warn("You must specify a username and passwd to access data!"
+                          " If you have a terminal already running, you can ignore this message")
 
     @contextmanager
     def connect(self):
@@ -66,7 +77,6 @@ class ThetaClient:
         finally:
             self._server.close()
 
-
     def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytearray:
         """Wait for a response from the Terminal.
         :param n_bytes:       The number of bytes to receive.
@@ -76,7 +86,7 @@ class ThetaClient:
         assert self._server is not None, _NOT_CONNECTED_MSG
 
         # receive body data in parts
-        MAX_PART_SIZE = 4096  # 4 KiB recommended for most machines
+        MAX_PART_SIZE = 512  # 4 KiB recommended for most machines
 
         buffer = bytearray(n_bytes)
         bytes_downloaded = 0
