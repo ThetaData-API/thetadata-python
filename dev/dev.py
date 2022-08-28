@@ -50,21 +50,23 @@ def strikes_crash() -> pd.DataFrame:
 
 def crash() -> pd.DataFrame:
     # Create a ThetaClient
-    client = ThetaClient(username="my_theta_data_email", passwd="my_thetadata_passwd")
+    client = ThetaClient()
 
     # Connect to the Terminal
     with client.connect():
-        # Make the request
-        data = client.get_hist_option(
-            req=OptionReqType.QUOTE,
-            root="AAPL",
-            exp=date(2022, 7, 15),
-            strike=150,
-            right=OptionRight.CALL,
-            date_range=DateRange(date(2022, 7, 1), date(2022, 7, 7)),
-            progress_bar=False,
-        )
+        with open("raw.txt") as f:
+            # Make the request
+            s = f.readline()
+            count = 0
 
+            while s is not None:
+                try:
+                    if count == 109:
+                        data = client.get_req(s)
+                except thetadata.NoData:
+                    x = 0
+                count += 1
+                s = f.readline()
     return data
 
 
