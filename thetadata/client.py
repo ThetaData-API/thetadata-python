@@ -59,7 +59,7 @@ class ThetaClient:
             Thread(target=launch_terminal, args=[username, passwd]).start()
         else:
             warnings.warn("You must specify a username and passwd to access data!"
-                          " If you have a terminal already running, you can ignore this message")
+                          " If you have a terminal already running, you can ignore this message.")
 
     @contextmanager
     def connect(self):
@@ -247,3 +247,22 @@ class ThetaClient:
         )
 
         return body
+
+    def get_req(
+        self,
+        req: str,
+    ) -> pd.DataFrame:
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        # send request
+        print(req)
+        self._server.sendall(req.encode("utf-8"))
+
+        # parse response header
+        header_data = self._server.recv(20)
+        header: Header = Header.parse(req, header_data)
+
+        # parse response body
+        body_data = self._recv(header.size, progress_bar=False)
+        body: DataFrame = TickBody.parse(req, header, body_data)
+        return body
+
