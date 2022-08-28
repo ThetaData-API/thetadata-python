@@ -14,6 +14,7 @@ from thetadata import (
 )
 from . import tc
 
+
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_end_of_day(tc: ThetaClient):
     """Test an EOD historical request."""
@@ -31,6 +32,7 @@ def test_end_of_day(tc: ThetaClient):
     print(res)
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0
+
 
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_hist_option_quotes_small(tc: ThetaClient):
@@ -51,6 +53,7 @@ def test_hist_option_quotes_small(tc: ThetaClient):
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0
 
+
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_hist_option_quotes_large(tc: ThetaClient):
     """Test a very large historical option request."""
@@ -69,6 +72,7 @@ def test_hist_option_quotes_large(tc: ThetaClient):
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0
 
+
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_hist_option_trades(tc: ThetaClient):
     """Test a very large historical option request."""
@@ -84,6 +88,7 @@ def test_hist_option_trades(tc: ThetaClient):
     print(res)
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0
+
 
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_hist_option_open_interest(tc: ThetaClient):
@@ -101,6 +106,7 @@ def test_hist_option_open_interest(tc: ThetaClient):
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0
 
+
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_expirations(tc: ThetaClient):
     """Test an expirations listing request."""
@@ -109,11 +115,13 @@ def test_get_expirations(tc: ThetaClient):
     assert isinstance(res, Series)
     assert len(res.index) > 0
 
+
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_strikes_error(tc: ThetaClient):
     """Ensure that an invalid strike listing request raises."""
     with pytest.raises(thetadata.ResponseError) as e_info:
         res = tc.get_strikes(root="BDX", exp=datetime.date(2022, 6, 1))
+
 
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_strikes(tc: ThetaClient):
@@ -125,6 +133,7 @@ def test_get_strikes(tc: ThetaClient):
     print(res)
     assert isinstance(res, Series)
     assert len(res.index) > 0
+
 
 @pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_roots(tc: ThetaClient):
