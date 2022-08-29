@@ -7,7 +7,7 @@ from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange, DataTy
 
 def strikes_crash() -> pd.DataFrame:
     # Create a ThetaClient
-    client = ThetaClient(timeout=180)
+    client = ThetaClient(timeout=180, username="baileydan911@gmail.com", passwd="ihatelag911bq")
 
     # Connect to the Terminal
     with client.connect():
@@ -50,25 +50,24 @@ def strikes_crash() -> pd.DataFrame:
 
 def crash() -> pd.DataFrame:
     # Create a ThetaClient
-    client = ThetaClient()
+    client = ThetaClient(timeout=180, username="baileydan911@gmail.com", passwd="ihatelag911bq")
 
     # Connect to the Terminal
     with client.connect():
-        with open("raw.txt") as f:
-            # Make the request
-            s = f.readline()
-            count = 0
+        # Make the request
+        data = client.get_hist_option(
+            req=OptionReqType.OHLC,
+            root="SPY",
+            exp=date(2022, 8, 26),
+            strike=410,
+            right=OptionRight.PUT,
+            date_range=DateRange(date(2022, 8, 25), date(2022, 8, 26)),
+            interval_size=60000,
+        )
 
-            while s is not None:
-                try:
-                    if count == 109:
-                        data = client.get_req(s)
-                except thetadata.NoData:
-                    x = 0
-                count += 1
-                s = f.readline()
     return data
 
 
 if __name__ == "__main__":
     out = crash()
+    print(out)
