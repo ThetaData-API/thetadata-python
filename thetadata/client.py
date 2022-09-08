@@ -254,7 +254,7 @@ class ThetaClient:
     ) -> pd.DataFrame:
         assert self._server is not None, _NOT_CONNECTED_MSG
         # send request
-        print(req)
+        req = req + "\n"
         self._server.sendall(req.encode("utf-8"))
 
         # parse response header

@@ -1,74 +1,31 @@
 import pandas as pd
 from datetime import date
-
-import thetadata.exceptions
-from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange, DataType
+from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
 
 
-def strikes_crash() -> pd.DataFrame:
+def eod() -> pd.DataFrame:
     # Create a ThetaClient
     client = ThetaClient(timeout=180)
 
     # Connect to the Terminal
     with client.connect():
-
-        exp = date(2022, 1, 10)
-
-        strikes = client.get_strikes("SPXW", exp)
         # Make the request
-        data = None
-
-        for j in strikes:
-            try:
-                data = client.get_hist_option(
+        out = client.get_hist_option(
                     req=OptionReqType.QUOTE,
-                    root="SPXW",
-                    exp=date(2022, 1, 10),
-                    strike=int(j) / 1000.0,
+                    root="AAPL",
+                    exp=date(2022, 9, 16),
+                    strike=140,
                     right=OptionRight.CALL,
-                    date_range=DateRange(date(2022, 1, 6), date(2022, 1, 7)),
+                    date_range=DateRange(date(2022, 8, 31), date(2022, 8, 31)),
                     interval_size=60000,
                     progress_bar=False,
-                )
+        )
+        print(out)
+        out = client.get_req("MSG_CODE=200&START_DATE=20220107&END_DATE=20220107&root=SPXW&exp=20220110&strike=4665000&right=P&sec=OPTION&req=104&IVL=60000")
 
-                data = client.get_hist_option(
-                    req=OptionReqType.OHLC,
-                    root="SPXW",
-                    exp=date(2022, 1, 10),
-                    strike=int(j) / 1000.0,
-                    right=OptionRight.CALL,
-                    date_range=DateRange(date(2022, 1, 6), date(2022, 1, 7)),
-                    interval_size=60000,
-                    progress_bar=False,
-                )
-                print('found')
-            except thetadata.exceptions.NoData:
-                print("no data for exp: " + str(exp) + " strike: " + str(int(j) / 1000.0))
-
-    return data
-
-
-def crash() -> pd.DataFrame:
-    # Create a ThetaClient
-    client = ThetaClient()
-
-    # Connect to the Terminal
-    with client.connect():
-        with open("raw.txt") as f:
-            # Make the request
-            s = f.readline()
-            count = 0
-
-            while s is not None:
-                try:
-                    if count == 109:
-                        data = client.get_req(s)
-                except thetadata.NoData:
-                    x = 0
-                count += 1
-                s = f.readline()
-    return data
+    return out
 
 
 if __name__ == "__main__":
-    out = crash()
+    data = eod()
+    print(data)
