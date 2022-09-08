@@ -107,7 +107,6 @@ def test_hist_option_open_interest(tc: ThetaClient):
     assert len(res.index) > 0
 
 
-@pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_expirations(tc: ThetaClient):
     """Test an expirations listing request."""
     res = tc.get_expirations(root="BDX")
@@ -135,7 +134,6 @@ def test_get_strikes(tc: ThetaClient):
     assert len(res.index) > 0
 
 
-@pytest.mark.skip(reason="No data for contract")  # TODO: remove
 def test_get_roots(tc: ThetaClient):
     """Test a root listing request."""
     res = tc.get_roots(sec=SecType.OPTION)
