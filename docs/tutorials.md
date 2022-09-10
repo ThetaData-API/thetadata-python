@@ -5,6 +5,7 @@ In this section you'll learn how to get started with the code in this project.
 ## Installation
 
 - Install Python 3.
+- Install Java 11 or later. THIS IS REQUIRED TO USE THE API.
 - Using pip, Python's package manager, open a terminal and run
 `pip install thetadata`
 or
