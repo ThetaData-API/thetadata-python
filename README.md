@@ -7,6 +7,8 @@ Please see this repository's [documentation](https://thetadata-api.github.io/Pyt
 
 ## Installation
 
+Java 11 or higher is required
+
 `pip install thetadata`
 
 A Theta Data account is required to access data. After obtaining an account, please
