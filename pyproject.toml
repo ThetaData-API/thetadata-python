@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thetadata"
-version = "0.3.7"
+version = "0.3.8"
 authors = [
   { name="Adler Weber", email="adlerweber8430@gmail.com" },
-  { name="Bailey Danseglio", email="baileydan911@gmail.com" },
+  { name="Bailey Danseglio", email="bailey@thetadata.net" },
 ]
 description = "Python API for ThetaData"
 readme = "README.md"
