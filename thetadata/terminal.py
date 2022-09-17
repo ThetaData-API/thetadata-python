@@ -7,11 +7,7 @@ def launch_terminal(username: str = None, passwd: str = None):
     if username is None or passwd is None:
         os.system("java -jar ThetaTerminal.jar")
     else:
-        cmd = ("java -jar ThetaTerminal.jar " + username + " " + passwd)
-        if os.name == 'nt':
-            os.system(cmd)
-        else:
-            os.system("sudo " + cmd)
+        os.system("java -jar ThetaTerminal.jar " + username + " " + passwd)
 
 
 def check_download(auto_update: bool):

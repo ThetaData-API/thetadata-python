@@ -114,7 +114,7 @@ class ThetaClient:
 
         All subsequent requests will timeout until the Terminal is restarted.
         """
-        assert self._server is not None, _NOT_CONNECTED_MSG
+        # assert self._server is not None, _NOT_CONNECTED_MSG We should be able to kill the terminal no matter what
         kill_msg = f"MSG_CODE={MessageType.KILL.value}\n"
         self._server.sendall(kill_msg.encode("utf-8"))
 
