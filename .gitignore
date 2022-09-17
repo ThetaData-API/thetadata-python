@@ -3,6 +3,7 @@ dist/
 venv/
 site/
 dev/
+dev/dev.py
 *.egg-info/
 
 # Byte-compiled / optimized / DLL files
