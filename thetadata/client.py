@@ -1,4 +1,5 @@
 """Module that contains Theta Client class."""
+import os
 import warnings
 from threading import Thread
 from time import sleep
@@ -54,6 +55,10 @@ class ThetaClient:
         self.port: int = port
         self.timeout = timeout
         self._server: Optional[socket.socket] = None  # None while disconnected
+        if os.system("java -version") != 0:
+            warnings.warn("Java 11 is required to use this API. Terminating...")
+            return
+
         if username is not None and passwd is not None:
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd]).start()
@@ -109,7 +114,7 @@ class ThetaClient:
 
         All subsequent requests will timeout until the Terminal is restarted.
         """
-        assert self._server is not None, _NOT_CONNECTED_MSG
+        # assert self._server is not None, _NOT_CONNECTED_MSG We should be able to kill the terminal no matter what
         kill_msg = f"MSG_CODE={MessageType.KILL.value}\n"
         self._server.sendall(kill_msg.encode("utf-8"))
 
