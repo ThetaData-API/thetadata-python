@@ -2,6 +2,7 @@ build/
 dist/
 venv/
 site/
+resources/
 dev/
 dev/dev.py
 *.egg-info/
