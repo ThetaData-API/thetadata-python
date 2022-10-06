@@ -1,6 +1,7 @@
 """Module that contains Theta Client class."""
 import os
 import warnings
+from decimal import Decimal
 from threading import Thread
 from time import sleep
 from typing import Optional
@@ -37,7 +38,7 @@ class ThetaClient:
     """A high-level, blocking client used to fetch market data."""
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60,
-                 username: str = None, passwd: str = None, auto_update: bool = True):
+                 username: str = None, passwd: str = None, auto_update: bool = True, use_bundle: bool = False):
         """Construct a client instance to interface with market data.
 
         :param port: The port number specified in the Theta Terminal config
@@ -61,7 +62,7 @@ class ThetaClient:
 
         if username is not None and passwd is not None:
             check_download(auto_update)
-            Thread(target=launch_terminal, args=[username, passwd]).start()
+            Thread(target=launch_terminal, args=[username, passwd, use_bundle]).start()
         else:
             warnings.warn("You must specify a username and passwd to access data!"
                           " If you have a terminal already running, you can ignore this message.")
@@ -75,8 +76,17 @@ class ThetaClient:
         """
 
         try:
-            self._server = socket.socket()
-            self._server.connect(("localhost", self.port))
+            for i in range(15):
+                try:
+                    self._server = socket.socket()
+                    self._server.connect(("localhost", self.port))
+                    self._server.settimeout(1)
+                    break
+                except ConnectionError:
+                    if i == 14:
+                        raise ConnectionError('Unable to connect to the local Theta Terminal process.'
+                                              ' Try restarting your system.')
+                    sleep(1)
             self._server.settimeout(self.timeout)
             yield
         finally:
@@ -196,8 +206,16 @@ class ThetaClient:
         out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(out, self._server.recv(20))
-        body = ListBody.parse(out, header, self._recv(header.size))
-        return body.lst
+        body = ListBody.parse(out, header, self._recv(header.size)).lst
+        div = Decimal(1000)
+
+        s = pd.Series([], dtype='float64')
+        c = 0
+        for i in body:
+            s[c] = Decimal(i) / div
+            c += 1
+
+        return s
 
     def get_roots(self, sec: SecType) -> pd.Series:
         """

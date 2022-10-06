@@ -1,13 +1,21 @@
 import os
+import sys
 import urllib.request
 
 
-def launch_terminal(username: str = None, passwd: str = None):
+def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool = False):
+
+    cmd = 'java -jar ThetaTerminal.jar'
+
+    if use_bundle:
+        jre = os.path.join(str(sys.path[1]), 'resources', 'corretto-11.0.16.1-win', 'bin', 'java')
+        jar = os.path.join(str(sys.path[1]), 'resources', 'ThetaTerminal.jar')
+        cmd = jre + ' -jar ' + jar
 
     if username is None or passwd is None:
-        os.system("java -jar ThetaTerminal.jar")
+        os.system(cmd)
     else:
-        os.system("java -jar ThetaTerminal.jar " + username + " " + passwd)
+        os.system(cmd + ' ' + username + ' ' + passwd)
 
 
 def check_download(auto_update: bool):
