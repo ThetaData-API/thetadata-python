@@ -2,9 +2,6 @@ build/
 dist/
 venv/
 site/
-resources/amazon-corretto-11.0.16.9.1-linux-x64
-resources/ThetaTerminal.jar
-resources/corretto-11.0.16.1-win
 dev/
 dev/dev.py
 *.egg-info/
@@ -17,3 +14,5 @@ __pycache__/
 # Pycharm
 .idea/
 PythonAPI.iml
+/resources/
+/resources/corretto-11.0.16.1-win/
