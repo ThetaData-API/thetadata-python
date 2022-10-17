@@ -61,6 +61,9 @@ class ThetaClient:
             return
 
         if username is not None and passwd is not None:
+            if passwd.__contains__('%') or passwd.__contains__('?') or passwd.__contains__(' '):
+                raise ConnectionError('Unable to connect! Your password contains illegal characters: %, ?, or  (space).'
+                                      ' Please change it at https://thetadata.net by going to login -> forgot password')
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle]).start()
         else:
