@@ -103,10 +103,10 @@ def test_hist_option_open_interest(tc: ThetaClient):
         res = tc.get_hist_option(
             req=OptionReqType.OPEN_INTEREST,
             root="AAPL",
-            exp=friday,
+            exp=datetime.date(2022, 11, 11),
             strike=140,
             right=OptionRight.CALL,
-            date_range=DateRange.from_days(7),
+            date_range=DateRange(start=datetime.date(2022, 10, 29), end=datetime.date(2022, 11, 5)),
             progress_bar=True,
         )
     except NoData:
