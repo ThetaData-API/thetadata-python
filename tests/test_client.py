@@ -1,4 +1,6 @@
 """Contains various tests for the ThetaClient class."""
+import warnings
+
 import pandas as pd
 from pandas import DataFrame, Series
 import pytest
@@ -92,7 +94,6 @@ def test_hist_option_trades(tc: ThetaClient):
 
 def test_hist_option_open_interest(tc: ThetaClient):
     """Test a very large historical option request."""
-
     today = datetime.date.today()
     friday = today + datetime.timedelta((4 - today.weekday()) % 7)
 
