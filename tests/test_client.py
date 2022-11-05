@@ -96,7 +96,9 @@ def test_hist_option_open_interest(tc: ThetaClient):
     """Test a very large historical option request."""
     today = datetime.date.today()
     friday = today + datetime.timedelta((4 - today.weekday()) % 7)
-
+    print("exp:        " + friday.__str__())
+    print("root:       " + "AAPL")
+    print("Date range: " + DateRange.from_days(7).__str__())
     try:
         res = tc.get_hist_option(
             req=OptionReqType.OPEN_INTEREST,
