@@ -10,7 +10,7 @@ from thetadata import (
     OptionRight,
     DateRange,
     SecType,
-    DataType,
+    DataType, NoData,
 )
 from . import tc
 
@@ -90,18 +90,34 @@ def test_hist_option_trades(tc: ThetaClient):
     assert len(res.index) > 0
 
 
-@pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_open_interest(tc: ThetaClient):
     """Test a very large historical option request."""
-    res = tc.get_hist_option(
-        req=OptionReqType.OPEN_INTEREST,
-        root="AAPL",
-        exp=(datetime.datetime.now() + datetime.timedelta(days=4)).date(),
-        strike=140,
-        right=OptionRight.CALL,
-        date_range=DateRange.from_days(7),
-        progress_bar=True,
-    )
+
+    today = datetime.date.today()
+    friday = today + datetime.timedelta((4 - today.weekday()) % 7)
+
+    try:
+        res = tc.get_hist_option(
+            req=OptionReqType.OPEN_INTEREST,
+            root="AAPL",
+            exp=friday,
+            strike=140,
+            right=OptionRight.CALL,
+            date_range=DateRange.from_days(7),
+            progress_bar=True,
+        )
+    except NoData:
+        today = datetime.date.today() + datetime.timedelta(days=7)
+        friday = today + datetime.timedelta((4 - today.weekday()) % 7)
+        res = tc.get_hist_option(
+            req=OptionReqType.OPEN_INTEREST,
+            root="AAPL",
+            exp=friday,
+            strike=140,
+            right=OptionRight.CALL,
+            date_range=DateRange.from_days(7),
+            progress_bar=True,
+        )
     print(res)
     assert isinstance(res, DataFrame)
     assert len(res.index) > 0

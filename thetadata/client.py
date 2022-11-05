@@ -37,13 +37,14 @@ def _format_date(dt: date) -> str:
 class ThetaClient:
     """A high-level, blocking client used to fetch market data."""
 
-    def __init__(self, port: int = 11000, timeout: Optional[float] = 60,
-                 username: str = None, passwd: str = None, auto_update: bool = True, use_bundle: bool = False):
+    def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True,
+                 username: str = "", passwd: str = "", auto_update: bool = True, use_bundle: bool = False):
         """Construct a client instance to interface with market data.
 
         :param port: The port number specified in the Theta Terminal config
         :param timeout: The max number of seconds to wait for a response before
             throwing a TimeoutError
+        :param launch: If true, launches the terminal; False uses an existing external terminal instance.
         :param username: Theta Data username / email. When specified with a
             password, this class will launch the terminal in headless mode.
         :param passwd: Theta Data password. When specified with a username,
@@ -60,15 +61,20 @@ class ThetaClient:
             warnings.warn("Java 11 is required to use this API. Terminating...")
             return
 
-        if username is not None and passwd is not None:
+        if launch:
             if passwd.__contains__('%') or passwd.__contains__('?') or passwd.__contains__(' '):
                 raise ConnectionError('Unable to connect! Your password contains illegal characters: %, ?, or  (space).'
-                                      ' Please change it at https://thetadata.net by going to login -> forgot password')
+                                      'Please change it at https://thetadata.net -> login -> forgot password.')
+            if username == "default" or passwd == "default":
+                warnings.warn("You are using the free version of Theta Data. You are currently limited to "
+                              "20 requests / minute. A data subscription can be purchased at https://thetadata.net. "
+                              "If you already have a Theta Data account, specify the username and passwd parameters.")
+
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle]).start()
         else:
-            warnings.warn("You must specify a username and passwd to access data!"
-                          " If you have a terminal already running, you can ignore this message.")
+            warnings.warn("You are not launching the terminal. "
+                          "This means you should have an external instance already running.")
 
     @contextmanager
     def connect(self):

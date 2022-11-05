@@ -6,6 +6,6 @@ from thetadata import ThetaClient
 @pytest.fixture
 def tc():
     """Generate a ThetaClient connected to the Terminal."""
-    client = ThetaClient(timeout=15)
+    client = ThetaClient(timeout=15, launch=False)
     with client.connect():
         yield client
