@@ -92,6 +92,7 @@ def test_hist_option_trades(tc: ThetaClient):
     assert len(res.index) > 0
 
 
+@pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_open_interest(tc: ThetaClient):
     """Test a very large historical option request."""
     today = datetime.date.today()
