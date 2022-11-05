@@ -73,8 +73,7 @@ class ThetaClient:
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle]).start()
         else:
-            warnings.warn("You are not launching the terminal. "
-                          "This means you should have an external instance already running.")
+            print("You are not launching the terminal. This means you should have an external instance already running.")
 
     @contextmanager
     def connect(self):
