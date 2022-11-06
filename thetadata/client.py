@@ -66,7 +66,7 @@ class ThetaClient:
                 raise ConnectionError('Unable to connect! Your password contains illegal characters: %, ?, or  (space).'
                                       'Please change it at https://thetadata.net -> login -> forgot password.')
             if username == "default" or passwd == "default":
-                warnings.warn("You are using the free version of Theta Data. You are currently limited to "
+                print("You are using the free version of Theta Data. You are currently limited to "
                               "20 requests / minute. A data subscription can be purchased at https://thetadata.net. "
                               "If you already have a Theta Data account, specify the username and passwd parameters.")
 
