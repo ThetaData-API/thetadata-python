@@ -67,8 +67,8 @@ class ThetaClient:
                                       'Please change it at https://thetadata.net -> login -> forgot password.')
             if username == "default" or passwd == "default":
                 print("You are using the free version of Theta Data. You are currently limited to "
-                              "20 requests / minute. A data subscription can be purchased at https://thetadata.net. "
-                              "If you already have a Theta Data account, specify the username and passwd parameters.")
+                      "20 requests / minute. A data subscription can be purchased at https://thetadata.net."
+                      "If you already have a Theta Data account, specify the username and passwd parameters.")
 
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle]).start()
