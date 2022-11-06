@@ -38,7 +38,7 @@ class ThetaClient:
     """A high-level, blocking client used to fetch market data."""
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True,
-                 username: str = "", passwd: str = "", auto_update: bool = True, use_bundle: bool = False):
+                 username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = False):
         """Construct a client instance to interface with market data.
 
         :param port: The port number specified in the Theta Terminal config
