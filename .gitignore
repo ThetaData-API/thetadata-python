@@ -3,6 +3,7 @@ dist/
 venv/
 site/
 dev/
+JupyterNotebook/credentials.txt
 dev/err.py
 *.egg-info/
 

@@ -219,6 +219,22 @@ class OptionReqType(enum.Enum):
     ALT_CALCS = 304
 
 
+@enum.unique
+class StockReqType(enum.Enum):
+    """Stock request type codes."""
+
+    # FREE
+    EOD = 1
+
+    # VALUE
+    QUOTE = 101
+    VOLUME = 102
+    OHLC = 104
+
+    # STANDARD
+    TRADE = 201
+
+
 @dataclass
 class DateRange:
     """Represents an inclusive date range."""
