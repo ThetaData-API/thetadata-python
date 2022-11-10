@@ -221,7 +221,7 @@ class ThetaClient:
             root: str,
             date_range: DateRange,
             interval_size: int = 0,
-            is_rth: bool = True,
+            use_rth: bool = True,
             progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
@@ -231,7 +231,7 @@ class ThetaClient:
         :param root:           The root symbol.
         :param date_range:     The dates to fetch.
         :param interval_size:  The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
-        :param is_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
+        :param use_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
         :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
@@ -243,7 +243,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
 
         # send request
-        hist_msg = f"MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&sec={SecType.STOCK.value}&req={req.value}&rth={is_rth}&IVL={interval_size}\n"
+        hist_msg = f"MSG_CODE={MessageType.HIST.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&sec={SecType.STOCK.value}&req={req.value}&rth={use_rth}&IVL={interval_size}\n"
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header
