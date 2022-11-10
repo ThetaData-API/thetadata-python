@@ -1,9 +1,7 @@
 """Module that contains Theta Client class."""
-import os
 import re
 import shutil
 import subprocess
-import warnings
 from decimal import Decimal
 from threading import Thread
 from time import sleep
@@ -115,6 +113,7 @@ class ThetaClient:
                                               ' Try restarting your system.')
                     sleep(1)
             self._server.settimeout(self.timeout)
+            #self._send_ver()
             yield
         finally:
             if self.launch:
@@ -149,6 +148,10 @@ class ThetaClient:
 
         assert bytes_downloaded == n_bytes
         return buffer
+
+    def _send_ver(self):
+        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.5.6\n"
+        self._server.sendall(ver_msg.encode("utf-8"))
 
     def kill(self, ignore_err=True) -> None:
         """Remotely kill the Terminal process.

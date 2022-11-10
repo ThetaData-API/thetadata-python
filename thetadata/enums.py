@@ -129,6 +129,7 @@ class MessageType(enum.Enum):
     INFO = 2
     METADATA = 3
     CONNECTED = 4
+    VERSION = 5
 
     # API communication
     PING = 100
