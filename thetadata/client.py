@@ -113,7 +113,7 @@ class ThetaClient:
                                               ' Try restarting your system.')
                     sleep(1)
             self._server.settimeout(self.timeout)
-            #self._send_ver()
+            self._send_ver()
             yield
         finally:
             if self.launch:
