@@ -179,7 +179,7 @@ class ThetaClient:
         right: OptionRight,
         date_range: DateRange,
         interval_size: int = 0,
-        use_rth: bool = False,
+        use_rth: bool = True,
         progress_bar: bool = False,
     ) -> pd.DataFrame:
         """

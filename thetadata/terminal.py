@@ -14,14 +14,14 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
         os.system(cmd + ' ' + username + ' ' + passwd)
     else:
         if jvm_mem > 0:
-            if sys.platform == "darwin":
+            if os.name != 'nt':
                 process = subprocess.Popen([f"java -Xmx{jvm_mem}G -jar ThetaTerminal.jar {username} {passwd}"],
                                            stdout=subprocess.PIPE, shell=True)
             else:
                 process = subprocess.Popen(["java", f"-Xmx{jvm_mem}G", "-jar", "ThetaTerminal.jar", username, passwd],
                                            stdout=subprocess.PIPE, shell=True)
         else:
-            if sys.platform == "darwin":
+            if os.name != 'nt':
                 process = subprocess.Popen([f"java -jar ThetaTerminal.jar {username} {passwd}"],
                                            stdout=subprocess.PIPE, shell=True)
             else:
