@@ -149,7 +149,7 @@ class ThetaClient:
         return buffer
 
     def _send_ver(self):
-        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.5.6\n"
+        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.5.8\n"
         self._server.sendall(ver_msg.encode("utf-8"))
 
     def kill(self, ignore_err=True) -> None:
