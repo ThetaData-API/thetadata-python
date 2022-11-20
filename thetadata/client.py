@@ -45,7 +45,7 @@ def _verify_java():
 
     if version < 11:
         print('Java 11 or higher is required to use this API. You are using using Java '
-              + version + '. Please upgrade to a newer version.')
+              + str(version) + '. Please upgrade to a newer version.')
         exit(1)
 
 
@@ -142,15 +142,13 @@ class ThetaClient:
             part_size = min(MAX_PART_SIZE, n_bytes - bytes_downloaded)
             bytes_downloaded += part_size
             part = self._server.recv(part_size)
+            if part.__len__() < 0:
+                continue
             start += 1
             buffer[i: i + part_size] = part
 
         assert bytes_downloaded == n_bytes
         return buffer
-
-    def _send_ver(self):
-        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.5.8\n"
-        self._server.sendall(ver_msg.encode("utf-8"))
 
     def kill(self, ignore_err=True) -> None:
         """Remotely kill the Terminal process.
@@ -258,6 +256,49 @@ class ThetaClient:
         return body
 
     # LISTING DATA
+
+    def get_dates_stk(self, root: str, req: StockReqType) -> pd.Series:
+        """
+        Get all option expirations.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :return:               All dates that Theta Data provides data for given a request.
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        out = f"MSG_CODE={MessageType.ALL_DATES.value}&root={root}&sec={SecType.STOCK.value}&req={req.value}\n"
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size), dates=True)
+        return body.lst
+
+    def get_dates_opt(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date,
+            strike: float,
+            right: OptionRight) -> pd.Series:
+        """
+        Get all option expirations.
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an option.
+        :param root:           The root symbol.
+        :return:               All dates that Theta Data provides data for given a request.
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+        out = f"MSG_CODE={MessageType.ALL_DATES.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size), dates=True)
+        return body.lst
 
     def get_expirations(self, root: str) -> pd.Series:
         """
