@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "thetadata"
 version = "0.5.8"
 authors = [
-  { name="Adler Weber", email="redacted" },
+  { name="Adler Weber", email="redacted@thetadata.net" },
   { name="Bailey Danseglio", email="bailey@thetadata.net" },
 ]
 description = "Python API for ThetaData"
