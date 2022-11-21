@@ -151,6 +151,7 @@ class MessageType(enum.Enum):
     ALL_ROOTS = 205
     LIST_END = 206
     ALL_DATES = 207
+    AT_TIME = 208
 
     # Experimental
     REQUEST_SERVER_LIST = 300

@@ -215,6 +215,86 @@ class ThetaClient:
         body: DataFrame = TickBody.parse(hist_msg, header, body_data)
         return body
 
+    def get_opt_at_time(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date,
+            strike: float,
+            right: OptionRight,
+            date_range: DateRange,
+            ms_of_day: int = 0,
+    ) -> pd.DataFrame:
+        """
+         Returns the last datatype of the request at a provided millisecond of the day.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an option.
+        :param date_range:     The dates to fetch.
+        :param ms_of_day:      The time of day in milliseconds.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.AT_TIME.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}&IVL={ms_of_day}\n"
+        self._server.sendall(hist_msg.encode("utf-8"))
+
+        # parse response header
+        header_data = self._server.recv(20)
+        header: Header = Header.parse(hist_msg, header_data)
+
+        # parse response body
+        body_data = self._recv(header.size, progress_bar=False)
+        body: DataFrame = TickBody.parse(hist_msg, header, body_data)
+        return body
+
+    def get_stk_at_time(
+            self,
+            req: OptionReqType,
+            root: str,
+            date_range: DateRange,
+            ms_of_day: int = 0,
+    ) -> pd.DataFrame:
+        """
+         Returns the last datatype of the request at a provided millisecond of the day.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param date_range:     The dates to fetch.
+        :param ms_of_day:      The time of day in milliseconds.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        # format data
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.AT_TIME.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&sec={SecType.OPTION.value}&req={req.value}&IVL={ms_of_day}\n"
+        self._server.sendall(hist_msg.encode("utf-8"))
+
+        # parse response header
+        header_data = self._server.recv(20)
+        header: Header = Header.parse(hist_msg, header_data)
+
+        # parse response body
+        body_data = self._recv(header.size, progress_bar=False)
+        body: DataFrame = TickBody.parse(hist_msg, header, body_data)
+        return body
+
     def get_hist_stock(
             self,
             req: StockReqType,
