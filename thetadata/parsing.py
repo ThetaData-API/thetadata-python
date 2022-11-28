@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 from pandas import DataFrame, Series
-from .exceptions import ResponseError, NoData, ResponseParseError
+from .exceptions import ResponseError, NoData, ResponseParseError, ReconnectingToServer
 from .enums import DataType, MessageType
 
 
@@ -82,6 +82,8 @@ def _check_body_errors(header: Header, body_data: bytes):
     """Check for errors from the Terminal.
 
     :raises NoData: if the server does not contain data for the request.
+    :raises ReconnectingToServer: if the connection has been lost to Theta Data and a
+                                  reconnection attempt is being made/
     :raises ResponseError: if the header indicates an error, containing a
                            helpful error message.
     """
@@ -89,6 +91,8 @@ def _check_body_errors(header: Header, body_data: bytes):
         msg = body_data.decode("ascii")
         if "no data" in msg.lower():
             raise NoData(msg)
+        elif "disconnected" in msg.lower():
+            raise ReconnectingToServer(msg)
         else:
             raise ResponseError(msg)
 

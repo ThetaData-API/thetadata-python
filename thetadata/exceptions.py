@@ -29,3 +29,7 @@ class ResponseError(Exception):
 
 class NoData(Exception):
     """Raised if no data is available for this request."""
+
+
+class ReconnectingToServer(Exception):
+    """Raised if the connection has been lost to Theta Data and a reconnection attempt is being made."""
