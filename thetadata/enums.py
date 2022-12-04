@@ -207,6 +207,7 @@ class OptionReqType(enum.Enum):
     VOLUME = 102
     OPEN_INTEREST = 103
     OHLC = 104
+    OHLC_QUOTE = 105
 
     # STANDARD
     TRADE = 201
