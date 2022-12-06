@@ -336,7 +336,7 @@ class ThetaClient:
 
     def get_dates_stk(self, root: str, req: StockReqType) -> pd.Series:
         """
-        Get all option expirations.
+        Get all dates of data available for a given stock contract and request type.
 
         :param req:            The request type.
         :param root:           The root symbol.
@@ -358,11 +358,12 @@ class ThetaClient:
             strike: float,
             right: OptionRight) -> pd.Series:
         """
-        Get all option expirations.
+        Get all dates of data available for a given option contract and request type.
+
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
-        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param strike:         The strike price in USD.
         :param right:          The right of an option.
         :param root:           The root symbol.
         :return:               All dates that Theta Data provides data for given a request.
