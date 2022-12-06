@@ -258,7 +258,7 @@ class ThetaClient:
 
     def get_stk_at_time(
             self,
-            req: OptionReqType,
+            req: StockReqType,
             root: str,
             date_range: DateRange,
             ms_of_day: int = 0,
@@ -280,7 +280,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
 
         # send request
-        hist_msg = f"MSG_CODE={MessageType.AT_TIME.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&sec={SecType.OPTION.value}&req={req.value}&IVL={ms_of_day}\n"
+        hist_msg = f"MSG_CODE={MessageType.AT_TIME.value}&START_DATE={start_fmt}&END_DATE={end_fmt}&root={root}&sec={SecType.STOCK.value}&req={req.value}&IVL={ms_of_day}\n"
         self._server.sendall(hist_msg.encode("utf-8"))
 
         # parse response header

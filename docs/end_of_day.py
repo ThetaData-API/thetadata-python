@@ -4,24 +4,21 @@ from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange
 
 
 def end_of_day() -> pd.DataFrame:
-    """Request end-of-day data between 7/18/2022 and 7/22/2022."""
-    # Create a ThetaClient
-    client = ThetaClient()
 
-    # Connect to the Terminal
-    with client.connect():
+    client = ThetaClient()  # No credentials required for free access
 
+    with client.connect():  # Make any requests for data inside this block. Requests made outside this block won't run.
         # Make the request
         data = client.get_hist_option(
             req=OptionReqType.EOD,
             root="AAPL",
-            exp=date(2022, 8, 12),
-            strike=140,
+            exp=date(2022, 11, 25),
+            strike=150,
             right=OptionRight.CALL,
-            date_range=DateRange(date(2022, 7, 18), date(2022, 7, 22)),
+            date_range=DateRange(date(2022, 10, 15), date(2022, 11, 15))
         )
-
-    return data
+    # We are out of the client.connect() block, so we can no longer make requests.
+    print(data)
 
 
 if __name__ == "__main__":
