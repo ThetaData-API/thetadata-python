@@ -110,11 +110,16 @@ class ThetaClient:
                                               ' Try restarting your system.')
                     sleep(1)
             self._server.settimeout(self.timeout)
+            self._send_ver()
             yield
         finally:
             if self.launch:
                 self.kill()
             self._server.close()
+
+    def _send_ver(self):
+        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.6.4\n"
+        self._server.sendall(ver_msg.encode("utf-8"))
 
     def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytearray:
         """Wait for a response from the Terminal.
@@ -373,6 +378,29 @@ class ThetaClient:
         strike = _format_strike(strike)
         exp_fmt = _format_date(exp)
         out = f"MSG_CODE={MessageType.ALL_DATES.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={req.value}\n"
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size), dates=True)
+        return body.lst
+
+    def get_dates_opt_bulk(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date) -> pd.Series:
+        """
+        Get all dates of data available for a given option expiration and request type.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param root:           The root symbol.
+        :return:               All dates that Theta Data provides data for given option chain (expiration).
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        exp_fmt = _format_date(exp)
+        out = f"MSG_CODE={MessageType.ALL_DATES_BULK.value}&root={root}&exp={exp_fmt}&sec={SecType.OPTION.value}&req={req.value}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
