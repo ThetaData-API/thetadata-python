@@ -445,7 +445,7 @@ class ThetaClient:
         right: OptionRight,
     ) -> pd.DataFrame:
         """
-        Get the most recent option data.
+        Get the most recent option tick.
 
         :param req:            The request type.
         :param root:           The root symbol.
@@ -470,7 +470,33 @@ class ThetaClient:
         body: DataFrame = TickBody.parse(
             hist_msg, header, self._recv(header.size)
         )
+        return body
 
+    def get_last_stock(
+        self,
+        req: StockReqType,
+        root: str,
+    ) -> pd.DataFrame:
+        """
+        Get the most recent stock tick.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.LAST.value}&root={root}&sec={SecType.STOCK.value}&req={req.value}\n"
+        self._server.sendall(hist_msg.encode("utf-8"))
+
+        # parse response
+        header: Header = Header.parse(hist_msg, self._server.recv(20))
+        body: DataFrame = TickBody.parse(
+            hist_msg, header, self._recv(header.size)
+        )
         return body
 
     def get_req(
