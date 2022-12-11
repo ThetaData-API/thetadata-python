@@ -57,11 +57,12 @@ def _verify_java():
 
 def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool = True, jvm_mem: int = 0):
     cwd = None
+    use_it = False
 
     if use_bundle:
-        use_bundle = _install_jdk()
+        use_it = _install_jdk()
 
-    if use_bundle:
+    if use_it:
         cwd = jdk_path
         shutil.move("ThetaTerminal.jar", str(cwd.joinpath('ThetaTerminal.jar')))
     else:
