@@ -25,18 +25,17 @@ def _install_jdk() -> bool:
     if jdk_path.exists():
         return True
     try:
-        print('--------------------------------------------------------------\n')
-        print('Initiated first time setup, do not terminate the program!')
-        print('\n--------------------------------------------------------------')
-
         if platform.system() == 'Windows':
+            print('--------------------------------------------------------------\n')
+            print('Initiated first time setup, do not terminate the program!')
+            print('\n--------------------------------------------------------------')
             download = wget.download(url_windows, bar=bar_progress)
 
             with zipfile.ZipFile(download, 'r') as zip_ref:
                 zip_ref.extractall(jdk_path)
             os.remove(download)
             print()
-        return True
+            return True
     except:
         pass
     return False
