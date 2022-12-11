@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thetadata"
-version = "0.6.6"
+version = "0.6.7"
 authors = [
   { name="Adler Weber", email="redacted@thetadata.net" },
   { name="Bailey Danseglio", email="bailey@thetadata.net" },
