@@ -23,6 +23,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
+_VERSION = '0.6.5'
 
 
 def _format_strike(strike: float) -> int:
@@ -35,26 +36,12 @@ def _format_date(dt: date) -> str:
     return dt.strftime("%Y%m%d")
 
 
-def _verify_java():
-    if not shutil.which("java"):
-        print('Java 11 or higher is required to use this API. Please install Java on this machine.')
-        exit(1)
-    version = subprocess.check_output(['java', '-version'], stderr=subprocess.STDOUT)
-    pattern = '\"(\d+\.\d+).*\"'
-    version = float(re.search(pattern, version.decode('utf8')).groups()[0])
-
-    if version < 11:
-        print('Java 11 or higher is required to use this API. You are using using Java '
-              + str(version) + '. Please upgrade to a newer version.')
-        exit(1)
-
-
 # noinspection GrazieInspection
 class ThetaClient:
     """A high-level, blocking client used to fetch market data."""
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True, jvm_mem: int = 0,
-                 username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = False):
+                 username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True):
         """Construct a client instance to interface with market data.
 
         :param port: The port number specified in the Theta Terminal config
@@ -70,20 +57,20 @@ class ThetaClient:
             latest terminal version each time this class is instantiated. If
             false, the terminal will use the current jar terminal file. If none
             exists, it will download the latest version.
+        :param use_bundle: Will download / use open-jdk-19.0.1 if True.
         """
         self.port: int = port
         self.timeout = timeout
         self._server: Optional[socket.socket] = None  # None while disconnected
         self.launch = launch
 
-        _verify_java()
-
         if launch:
             if username == "default" or passwd == "default":
+                print('------------------------------------------------------------------------------------------------')
                 print("You are using the free version of Theta Data. You are currently limited to "
-                      "20 requests / minute. A data subscription can be purchased at https://thetadata.net. "
-                      "If you already have a Theta Data account, specify the username and passwd parameters.")
-
+                      "20 requests / minute.\nA data subscription can be purchased at https://thetadata.net. "
+                      "If you already have a ThetaData\naccount, specify the username and passwd parameters.")
+                print('------------------------------------------------------------------------------------------------')
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle, jvm_mem]).start()
         else:
@@ -118,7 +105,7 @@ class ThetaClient:
             self._server.close()
 
     def _send_ver(self):
-        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version=0.6.4\n"
+        ver_msg = f"MSG_CODE={MessageType.HIST.value}&version={_VERSION}\n"
         self._server.sendall(ver_msg.encode("utf-8"))
 
     def _recv(self, n_bytes: int, progress_bar: bool = False) -> bytearray:
@@ -421,24 +408,30 @@ class ThetaClient:
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
 
-    def get_strikes(self, root: str, exp: date) -> pd.Series:
+    def get_strikes(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
         """
         Get all option strike prices in US tenths of a cent.
 
         :param root: The root symbol.
         :param exp: The expiration date.
+        :param date_range: If specified, this function will return strikes only if they have data for every day in the date range.
         :return: The strike prices on the expiration.
         :raises ResponseError: If the request failed.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         assert isinstance(exp, date)
         exp_fmt = _format_date(exp)
-        out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
+
+        if date_range is not None:
+            start_fmt = _format_date(date_range.start)
+            end_fmt = _format_date(date_range.end)
+            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}&START_DATE={start_fmt}&END_DATE={end_fmt}\n"
+        else:
+            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
         self._server.send(out.encode("utf-8"))
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size)).lst
         div = Decimal(1000)
-
         s = pd.Series([], dtype='float64')
         c = 0
         for i in body:
