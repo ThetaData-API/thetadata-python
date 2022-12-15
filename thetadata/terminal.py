@@ -11,7 +11,9 @@ from pathlib import Path
 import wget
 
 jdk_path = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal')\
-    .joinpath('openjdk-19.0.1').joinpath('jdk-19.0.1').joinpath('bin')
+    .joinpath('jdk-19.0.1').joinpath('bin')
+
+to_extract = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal')
 
 
 def bar_progress(current, total, width=80):
@@ -32,7 +34,7 @@ def _install_jdk() -> bool:
             download = wget.download(url_windows, bar=bar_progress)
 
             with zipfile.ZipFile(download, 'r') as zip_ref:
-                zip_ref.extractall(jdk_path)
+                zip_ref.extractall(to_extract)
             os.remove(download)
             print()
             return True
