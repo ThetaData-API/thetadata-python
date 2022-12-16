@@ -1,5 +1,5 @@
 import pandas as pd
-from .list_roots import get_roots
+from list_roots_stk import get_roots
 
 
 def main():
