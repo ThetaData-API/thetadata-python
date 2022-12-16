@@ -16,6 +16,4 @@ to get started.
 
 ## Contributing
 
-We welcome all feedback, whether it comes in the form of Github issues, pull requests, or pings in our Discord!
-
-Discord: https://discord.com/invite/KCVZ5Zyry9
+We welcome all feedback, whether it comes in the form of Github issues, pull requests, or pings in our [Discord](https://discord.com/invite/KCVZ5Zyry9)!
