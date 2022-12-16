@@ -1,6 +1,6 @@
 import pandas as pd
 from thetadata import DataType
-from .end_of_day import end_of_day
+from .end_of_day_opt import end_of_day
 
 
 def main():

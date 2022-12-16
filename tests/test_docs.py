@@ -3,7 +3,7 @@ import pytest
 import docs
 from docs.get_last import get_last
 from docs.list_roots import get_roots
-from docs.end_of_day import end_of_day
+from docs.end_of_day_opt import end_of_day
 from docs import manipulate_df, manipulate_series
 
 @pytest.mark.skip(reason="No data for contract")

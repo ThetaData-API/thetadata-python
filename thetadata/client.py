@@ -69,7 +69,7 @@ class ThetaClient:
                 print('------------------------------------------------------------------------------------------------')
                 print("You are using the free version of Theta Data. You are currently limited to "
                       "20 requests / minute.\nA data subscription can be purchased at https://thetadata.net. "
-                      "If you already have a ThetaData\naccount, specify the username and passwd parameters.")
+                      "If you already have a ThetaData\nsubscription, specify the username and passwd parameters.")
                 print('------------------------------------------------------------------------------------------------')
             check_download(auto_update)
             Thread(target=launch_terminal, args=[username, passwd, use_bundle, jvm_mem]).start()

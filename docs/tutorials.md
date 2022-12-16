@@ -18,12 +18,12 @@ or
 With the API installed, you can now
 `import thetadata` in any Python script you'd like!
 
-Here's how you may make your first **free** request:
+Here's how you may make your first **free** stock data request:
 
 === "end_of_day.py"
 
     ```python
-    --8<-- "docs/end_of_day.py"
+    --8<-- "docs/end_of_day_stk.py"
     ```
 
 === "Output"
