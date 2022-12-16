@@ -5,17 +5,11 @@ In this section you'll learn how to get started with the code in this project.
 ## Installation
 
 - Install Python 3.
-- Install Java 11 or later. THIS IS REQUIRED TO USE THE API.
+- Install Java 11 or later. If you are using Windows, this will automatically be done for you. THIS IS REQUIRED TO USE THE API.
 - Using pip, Python's package manager, open a terminal and run
 `pip install thetadata`
 or
 `python -m pip install thetadata`
-
-## READ THIS!
-
-You will not be able to use Theta Data unless you instaniate a ThetaClient object with the `username` and `passwd` fields. These examples do not instaniate ThetaClient that way but you should. An example of proper ThetaClient instantiation is:
-
-```client = ThetaClient(username="my_theta_data_email", passwd="my_thetadata_passwd")```
 
 ## Free data
 
@@ -24,7 +18,7 @@ You will not be able to use Theta Data unless you instaniate a ThetaClient objec
 With the API installed, you can now
 `import thetadata` in any Python script you'd like!
 
-Here's how you may make your first (**free**) request:
+Here's how you may make your first **free** request:
 
 === "end_of_day.py"
 
@@ -90,7 +84,7 @@ Congratulations, you've made and processed your first request!
 
 ## List roots
 
-Let's try another common request, listing all root symbols for options. 
+Let's try another common request, listing all root symbols for options. This request returns a series of all tickers (symbols) that have traded options.
 
 === "list_roots.py"
 
@@ -143,8 +137,6 @@ The above example returned a `Series`. Let's see how we can use it to process ou
 ## Get last option
 
 Now let's try a low-latency request for the most recent option data available:
-
-Note that *as of now*, live data requests will only work during trading hours!
 
 === "get_last.py"
 
