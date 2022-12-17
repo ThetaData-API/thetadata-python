@@ -1,12 +1,13 @@
 import pandas as pd
 from datetime import date
-from thetadata import ThetaClient, OptionReqType, OptionRight, DateRange, StockReqType
+from thetadata import ThetaClient, DateRange, StockReqType
 
 
 def end_of_day() -> pd.DataFrame:
     client = ThetaClient()  # No credentials required for free access
 
-    with client.connect():  # Make any requests for data inside this block. Requests made outside this block won't run.
+    # Make any requests for data inside this block. Requests made outside this block won't run.
+    with client.connect():
         out = client.get_hist_stock(
             req=StockReqType.EOD,  # End of day data
             root="AAPL",

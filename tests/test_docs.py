@@ -1,9 +1,8 @@
 """Contains tests for the tutorial section of the documentation."""
 import pytest
-import docs
-from docs.get_last_opt import get_last
-from docs.list_roots_opt import get_roots
-from docs.end_of_day_opt import end_of_day
+from docs.options.get_last import get_last
+from docs.options.list_roots import get_roots
+from docs.options.eod import end_of_day
 from docs import manipulate_df, manipulate_series
 
 

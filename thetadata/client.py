@@ -1,7 +1,4 @@
 """Module that contains Theta Client class."""
-import re
-import shutil
-import subprocess
 from decimal import Decimal
 from threading import Thread
 from time import sleep
@@ -36,28 +33,27 @@ def _format_date(dt: date) -> str:
     return dt.strftime("%Y%m%d")
 
 
-# noinspection GrazieInspection
 class ThetaClient:
-    """A high-level, blocking client used to fetch market data."""
+    """A high-level, blocking client used to fetch market data. Instantiating this class
+    runs a java background process, which is responsible for the heavy lifting of market
+    data communication. Java 11 or higher is required to use this class."""
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True, jvm_mem: int = 0,
                  username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True):
-        """Construct a client instance to interface with market data.
+        """Construct a client instance to interface with market data. If no username and passwd fields are provided,
+            the terminal will connect to thetadata servers with free data permissions.
 
-        :param port: The port number specified in the Theta Terminal config
-        :param timeout: The max number of seconds to wait for a response before
-            throwing a TimeoutError
+        :param port: The port number specified in the Theta Terminal config, which can usually be found under
+                        %user.home%/ThetaData/ThetaTerminal.
+        :param timeout: The max number of seconds to wait for a response before throwing a TimeoutError
         :param launch: Launches the terminal if true; uses an existing external terminal instance if false.
         :jvm_mem: Any integer provided above zero will force the terminal to allocate a maximum amount of memory in GB.
-        :param username: Theta Data username / email. When specified with a
-            password, this class will launch the terminal in headless mode.
-        :param passwd: Theta Data password. When specified with a username,
-            this class will launch the terminal in headless mode.
-        :param auto_update: If true, this class will automatically download the
-            latest terminal version each time this class is instantiated. If
-            false, the terminal will use the current jar terminal file. If none
-            exists, it will download the latest version.
-        :param use_bundle: Will download / use open-jdk-19.0.1 if True.
+        :param username: Theta Data email. Can be omitted with passwd if using free data.
+        :param passwd: Theta Data password. Can be omitted with username if using free data.
+        :param auto_update: If true, this class will automatically download the latest terminal version each time
+            this class is instantiated. If false, the terminal will use the current jar terminal file. If none exists,
+            it will download the latest version.
+        :param use_bundle: Will download / use open-jdk-19.0.1 if True and the operating system is windows.
         """
         self.port: int = port
         self.timeout = timeout
@@ -78,7 +74,8 @@ class ThetaClient:
 
     @contextmanager
     def connect(self):
-        """Initiate a connection with the Theta Terminal on `localhost`.
+        """Initiate a connection with the Theta Terminal on `localhost`. Requests can only be made inside this
+            generator aka the `with client.connect()` block.
 
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
@@ -105,6 +102,7 @@ class ThetaClient:
             self._server.close()
 
     def _send_ver(self):
+        """Sends this API version to the Theta Terminal."""
         ver_msg = f"MSG_CODE={MessageType.HIST.value}&version={_VERSION}\n"
         self._server.sendall(ver_msg.encode("utf-8"))
 
@@ -140,9 +138,8 @@ class ThetaClient:
         return buffer
 
     def kill(self, ignore_err=True) -> None:
-        """Remotely kill the Terminal process.
-
-        All subsequent requests will timeout until the Terminal is restarted.
+        """Remotely kill the Terminal process. All subsequent requests will time out after this. A new instance of this
+           class must be created.
         """
         if not ignore_err:
             assert self._server is not None, _NOT_CONNECTED_MSG
@@ -169,20 +166,22 @@ class ThetaClient:
         progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
-        Get historical option data.
+         Get historical options data.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
-        :param right:          The right of an option.
+        :param right:          The right of an option. CALL = Bullish; PUT = Bearish
         :param date_range:     The dates to fetch.
-        :param interval_size:  The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
-        :param use_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
+        :param interval_size:  The interval size in milliseconds. Applicable to most requests except ReqType.TRADE.
+        :param use_rth:        If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored
+                                  (only applicable to intervals requests).
         :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # format data
@@ -215,18 +214,19 @@ class ThetaClient:
             ms_of_day: int = 0,
     ) -> pd.DataFrame:
         """
-         Returns the last datatype of the request at a provided millisecond of the day.
+         Returns the last tick at a provided millisecond of the day for a given request type.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
-        :param right:          The right of an option.
+        :param right:          The right of an option. CALL = Bullish; PUT = Bearish
         :param date_range:     The dates to fetch.
         :param ms_of_day:      The time of day in milliseconds.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # format data
@@ -256,15 +256,16 @@ class ThetaClient:
             ms_of_day: int = 0,
     ) -> pd.DataFrame:
         """
-         Returns the last datatype of the request at a provided millisecond of the day.
+         Returns the last tick at a provided millisecond of the day for a given request type.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
         :param date_range:     The dates to fetch.
         :param ms_of_day:      The time of day in milliseconds.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # format data
@@ -294,7 +295,7 @@ class ThetaClient:
             progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
-        Get historical stock data.
+         Get historical stock data.
 
         :param req:            The request type.
         :param root:           The root symbol.
@@ -305,6 +306,7 @@ class ThetaClient:
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # format data
@@ -331,9 +333,11 @@ class ThetaClient:
         Get all dates of data available for a given stock contract and request type.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
+
         :return:               All dates that Theta Data provides data for given a request.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         out = f"MSG_CODE={MessageType.ALL_DATES.value}&root={root}&sec={SecType.STOCK.value}&req={req.value}\n"
@@ -350,16 +354,17 @@ class ThetaClient:
             strike: float,
             right: OptionRight) -> pd.Series:
         """
-        Get all dates of data available for a given option contract and request type.
+        Get all dates of data available for a given options contract and request type.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in USD.
-        :param right:          The right of an option.
-        :param root:           The root symbol.
+        :param right:          The right of an options.
+
         :return:               All dates that Theta Data provides data for given a request.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         strike = _format_strike(strike)
@@ -376,14 +381,15 @@ class ThetaClient:
             root: str,
             exp: date) -> pd.Series:
         """
-        Get all dates of data available for a given option expiration and request type.
+        Get all dates of data available for a given options expiration and request type.
 
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date. Must be after the start of `date_range`.
-        :param root:           The root symbol.
-        :return:               All dates that Theta Data provides data for given option chain (expiration).
+
+        :return:               All dates that Theta Data provides data for given options chain (expiration).
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         exp_fmt = _format_date(exp)
@@ -395,11 +401,13 @@ class ThetaClient:
 
     def get_expirations(self, root: str) -> pd.Series:
         """
-        Get all option expirations.
+        Get all options expirations for a provided underlying root.
 
-        :param root: The root symbol.
-        :return: All expirations that Theta Data provides data for (YYYYMMDD).
+        :param root:           The root / underlying / ticker / symbol.
+
+        :return:               All expirations that ThetaData provides data for.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         out = f"MSG_CODE={MessageType.ALL_EXPIRATIONS.value}&root={root}\n"
@@ -410,13 +418,16 @@ class ThetaClient:
 
     def get_strikes(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
         """
-        Get all option strike prices in US tenths of a cent.
+        Get all options strike prices in US tenths of a cent.
 
-        :param root: The root symbol.
-        :param exp: The expiration date.
-        :param date_range: If specified, this function will return strikes only if they have data for every day in the date range.
-        :return: The strike prices on the expiration.
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date.
+        :param date_range:     If specified, this function will return strikes only if they have data for every
+                                day in the date range.
+
+        :return:               The strike prices on the expiration.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         assert isinstance(exp, date)
@@ -445,8 +456,10 @@ class ThetaClient:
         Get all roots for a certain security type.
 
         :param sec: The type of security.
-        :return: All root symbols for the security type.
+
+        :return: All roots / underlyings / tickers / symbols for the security type.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         out = f"MSG_CODE={MessageType.ALL_ROOTS.value}&sec={sec.value}\n"
@@ -466,16 +479,17 @@ class ThetaClient:
         right: OptionRight,
     ) -> pd.DataFrame:
         """
-        Get the most recent option tick.
+        Get the most recent options tick.
 
         :param req:            The request type.
         :param root:           The root symbol.
         :param exp:            The expiration date.
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
-        :param right:          The right of an option.
+        :param right:          The right of an options.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # format data
@@ -502,10 +516,11 @@ class ThetaClient:
         Get the most recent stock tick.
 
         :param req:            The request type.
-        :param root:           The root symbol.
+        :param root:           The root / underlying / ticker / symbol.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
         """
         assert self._server is not None, _NOT_CONNECTED_MSG
 
@@ -524,6 +539,15 @@ class ThetaClient:
         self,
         req: str,
     ) -> pd.DataFrame:
+        """
+        Make a historical data request given the raw text output of a data request. Typically used for debugging.
+
+        :param req:            The raw request.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
         assert self._server is not None, _NOT_CONNECTED_MSG
         # send request
         req = req + "\n"

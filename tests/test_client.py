@@ -38,7 +38,7 @@ def test_end_of_day(tc: ThetaClient):
 
 @pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_quotes_small(tc: ThetaClient):
-    """Test a historical option request."""
+    """Test a historical options request."""
     res = tc.get_hist_option(
         req=OptionReqType.QUOTE,
         root="AAPL",
@@ -58,7 +58,7 @@ def test_hist_option_quotes_small(tc: ThetaClient):
 
 @pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_quotes_large(tc: ThetaClient):
-    """Test a very large historical option request."""
+    """Test a very large historical options request."""
     res = tc.get_hist_option(
         req=OptionReqType.QUOTE,
         root="AAPL",
@@ -77,7 +77,7 @@ def test_hist_option_quotes_large(tc: ThetaClient):
 
 @pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_trades(tc: ThetaClient):
-    """Test a very large historical option request."""
+    """Test a very large historical options request."""
     res = tc.get_hist_option(
         req=OptionReqType.TRADE,
         root="AAPL",
@@ -94,7 +94,7 @@ def test_hist_option_trades(tc: ThetaClient):
 
 @pytest.mark.skip(reason="Ignore for now.")  # TODO: remove
 def test_hist_option_open_interest(tc: ThetaClient):
-    """Test a very large historical option request."""
+    """Test a very large historical options request."""
     today = datetime.date.today()
     friday = today + datetime.timedelta((4 - today.weekday()) % 7)
     print("exp:        " + friday.__str__())
@@ -167,7 +167,7 @@ def test_get_roots(tc: ThetaClient):
 
 @pytest.mark.skip(reason="Unable to retrieve last Price")  # TODO: remove
 def test_get_last(tc: ThetaClient):
-    """Test a get last option data request."""
+    """Test a get last options data request."""
     res = tc.get_last_option(
         req=OptionReqType.QUOTE,
         root="AAPL",

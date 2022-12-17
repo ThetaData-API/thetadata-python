@@ -3,13 +3,11 @@ from thetadata import ThetaClient, SecType
 
 
 def get_roots() -> pd.Series:
-    # Create a ThetaClient
     client = ThetaClient()  # No credentials required for free access
 
-    # Connect to the Terminal
-    with client.connect():  # Make any requests for data inside this block. Requests made outside this block won't run.
-        # List all roots that have traded options
-        out = client.get_roots(sec=SecType.OPTION)
+    # Make any requests for data inside this block. Requests made outside this block won't run.
+    with client.connect():
+        out = client.get_roots(sec=SecType.STOCK)
 
     # We are out of the client.connect() block, so we can no longer make requests.
     return out

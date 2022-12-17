@@ -4,12 +4,12 @@ from thetadata import ThetaClient, OptionReqType, OptionRight
 
 
 def get_last() -> pd.DataFrame:
-
     # Credentials now required because get_last is only available to ThetaData subscribers.
     client = ThetaClient(username="MyThetaDataEmail", passwd="MyThetaDataPassword")
 
-    with client.connect():  # Make any requests for data inside this block. Requests made outside this block won't run.
-        # Request the most recent quote for an AAPL $130.00 CALL option expiring on 2022-12-30.
+    # Make any requests for data inside this block. Requests made outside this block won't run.
+    with client.connect():
+        # Request the most recent quote for an AAPL $130.00 CALL options expiring on 2022-12-30.
         out = client.get_last_option(
             req=OptionReqType.QUOTE,
             root="AAPL",
