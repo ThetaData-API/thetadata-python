@@ -268,13 +268,13 @@ why we recommend using a `date_range` of 1 for these requests.
 === "quote.py"
 
     ```python
-    --8<-- "docs/stock/quote_tick.py"
+    --8<-- "docs/stocks/quote_tick.py"
     ```
 
 === "Output"
 
     ```bash
-    > python docs/stock/quote_tick.py                                                                                                                                                                     
+    > python docs/stocks/quote_tick.py                                                                                                                                                                     
              DataType.MS_OF_DAY  DataType.BID_SIZE  DataType.BID_CONDITION  DataType.BID  DataType.BID_EXCHANGE  DataType.ASK_SIZE  DataType.ASK_CONDITION  DataType.ASK  DataType.ASK_EXCHANGE DataType.DATE
     0                  14340012                  0                       0          0.00                      0                  0                       0          0.00                      0    2022-11-18
     1                  14340126                  0                       0          0.00                      0                  0                       0          0.00                      0    2022-11-18
@@ -296,13 +296,13 @@ This significantly reduces output and improves latency.
 === "quote.py"
 
     ```python
-    --8<-- "docs/stock/quote_1min.py"
+    --8<-- "docs/stocks/quote_1min.py"
     ```
 
 === "Output"
 
     ```bash
-    > python docs/stock/quote_1min.py                                                                                                                                                                     
+    > python docs/stocks/quote_1min.py                                                                                                                                                                     
           DataType.MS_OF_DAY  DataType.BID_SIZE  DataType.BID_CONDITION  DataType.BID  DataType.BID_EXCHANGE  DataType.ASK_SIZE  DataType.ASK_CONDITION  DataType.ASK  DataType.ASK_EXCHANGE DataType.DATE
     0               34200000                  2                      65         75.23                      0                138                       1         75.24                      0    2022-11-14
     1               34260000                  1                       1         74.72                      0                  1                       1         74.77                      0    2022-11-14
@@ -327,13 +327,13 @@ recommend using a `date_range` of 5 days or less for these requests.
 === "quote.py"
 
     ```python
-    --8<-- "docs/stock/quote_1min.py"
+    --8<-- "docs/stocks/quote_1min.py"
     ```
 
 === "Output"
 
     ```bash
-    > python docs/stock/quote_1min.py                                                                                                                                                                     
+    > python docs/stocks/quote_1min.py                                                                                                                                                                     
         DataType.MS_OF_DAY  DataType.BID_SIZE  DataType.BID_CONDITION  DataType.BID  DataType.BID_EXCHANGE  DataType.ASK_SIZE  DataType.ASK_CONDITION  DataType.ASK  DataType.ASK_EXCHANGE DataType.DATE
     0                 28800107                  0                      65          0.00                     50                  0                      65          0.00                     50    2022-11-14
     1                 28801023                  0                       5          0.00                     50                  0                       5          0.00                     50    2022-11-14
@@ -355,13 +355,13 @@ This significantly reduces output and improves latency.
 === "quote.py"
 
     ```python
-    --8<-- "docs/option/quote_1min.py"
+    --8<-- "docs/options/quote_1min.py"
     ```
 
 === "Output"
 
     ```bash
-    > python docs/option/quote_1min.py                                                                                                                                                                        
+    > python docs/options/quote_1min.py                                                                                                                                                                        
           DataType.MS_OF_DAY  DataType.BID_SIZE  DataType.BID_CONDITION  DataType.BID  DataType.BID_EXCHANGE  DataType.ASK_SIZE  DataType.ASK_CONDITION  DataType.ASK  DataType.ASK_EXCHANGE DataType.DATE
     0               34200000                  0                      47          0.00                     50                  0                      47          0.00                     50    2022-11-14
     1               34260000               1081                       9         15.40                     50                188                      65         16.15                     50    2022-11-14
