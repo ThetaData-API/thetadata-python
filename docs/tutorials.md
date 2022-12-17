@@ -242,20 +242,30 @@ This tutorial will provide examples for requesting historical & intraday
 [NBBO(National Best Bid & Offer)](https://www.investopedia.com/terms/n/nbbo.asp)
 quotes.
 
-### The `interval_size` parameter
+### Preface
+
+#### The `interval_size` parameter
 
 We provide tick-level data for `QUOTE` requests. This means that when a request is made,
 every single quote inside the`date_range` provided will be returned. This can end up being 
 millions of quotes per trading day. Specifying the`interval_size` parameter aggregates these
 quotes and provides the NBBO at every `interval_size` milliseconds.
 
-### Be careful!
+#### Be careful!
 
 Not specifying the `interval_size` will return tick-level data, which can be an obscene 
 amount of data! If you plan to work with tick-level quote data, we recommend limiting 
-your `date_range` (per-request) to 1 week for options and 1 day for stocks to prevent 
-memory errors. If you are using an `interval_size` >= `60000`(1-min), you shouldn't 
-need to do this.
+your `date_range` (per-request) to 2 weeks for options and 1 day for stocks to prevent 
+memory overflow errors. If you are using an `interval_size` >= `60000`(1-min), 
+you shouldn't need to do this.
+
+#### Why are there quotes with no bid or ask?
+
+You'll notice that the first few quotes of the day may have empty bid and or ask and prices.
+These are test quotes usually sent by exchanges or
+[SIPs](https://www.investopedia.com/terms/n/national-market-system-plan.asp). It's safe
+to ignore them. We maintain a policy of not filtering any data unless the user asks us to,
+which is why they are included in tick-level requests.
 
 ### Stock Quotes
 
@@ -321,8 +331,8 @@ This significantly reduces output and improves latency.
 
 The example below returns every NBBO quote that occurred between `2022-11-14` and
 `2022-11-18` for the `$60 AMD CALL` that expires on `2022-12-16`. As seen in the 
-output, there are almost **1 million** quotes for this day alone, which is why we
-recommend using a `date_range` of 5 days or less for these requests.
+output, there are almost **1 million** quotes for this week alone, which is why we
+recommend using a `date_range` of 2 weeks or fewer for tick-level option requests.
 
 === "quote.py"
 
