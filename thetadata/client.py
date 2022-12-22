@@ -68,6 +68,7 @@ class Trade:
         self.size = 0
         self.condition = 0
         self.price = 0
+        self.exchange = None
         self.date = None
 
     def from_bytes(self, data: bytearray):
@@ -76,11 +77,12 @@ class Trade:
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         self.ms_of_day = parse_int(view[0:4])
-        self.sequence = parse_int(view[4:8])
+        self.sequence = parse_int(view[4:8]) & 0xffffffffffffffff
         self.size = parse_int(view[8:12])
         self.condition = parse_int(view[12:16])
-        self.price = round(parse_int(view[16:20]) * _pt_to_price_mul[parse_int(view[20:24])], 4)
-        date_raw = str(parse_int(view[24:28]))
+        self.price = round(parse_int(view[16:20]) * _pt_to_price_mul[parse_int(view[24:28])], 4)
+        self.exchange = Exchange.from_code(parse_int(view[20:24]))
+        date_raw = str(parse_int(view[28:32]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
 
@@ -305,7 +307,7 @@ class ThetaClient:
             if msg.type == StreamMsgType.QUOTE:
                 msg.quote.from_bytes(self._read_stream(44))
             elif msg.type == StreamMsgType.TRADE:
-                data = self._read_stream(n_bytes=28)
+                data = self._read_stream(n_bytes=32)
                 msg.trade.from_bytes(data)
             else:
                 continue
