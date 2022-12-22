@@ -6,5 +6,5 @@ Theta Data Python API.
 
 > Finding a concept confusing? Let us know!
 
-::: thetadata.enums
+::: thetadata.client
 ::: thetadata.exceptions
