@@ -21,7 +21,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.6.9'
+_VERSION = '0.7.1'
 
 
 def _format_strike(strike: float) -> int:
