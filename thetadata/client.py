@@ -1,4 +1,5 @@
 """Module that contains Theta Client class."""
+import struct
 from decimal import Decimal
 from threading import Thread
 from time import sleep
@@ -33,6 +34,117 @@ def _format_date(dt: date) -> str:
     return dt.strftime("%Y%m%d")
 
 
+_pt_to_price_mul = [
+    0,
+    0.000000001,
+    0.00000001,
+    0.0000001,
+    0.000001,
+    0.00001,
+    0.0001,
+    0.001,
+    0.01,
+    0.1,
+    1,
+    10.0,
+    100.0,
+    1000.0,
+    10000.0,
+    100000.0,
+    1000000.0,
+    10000000.0,
+    100000000.0,
+    1000000000.0,
+]
+
+
+class Trade:
+    def __init__(self):
+        self.ms_of_day = 0
+        self.sequence = 0
+        self.size = 0
+        self.condition = 0
+        self.price = 0
+        self.date = None
+
+    def from_bytes(self, data: bytearray):
+        view = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+        self.ms_of_day = parse_int(view[0:4])
+        self.sequence = parse_int(view[4:8])
+        self.size = parse_int(view[8:12])
+        self.condition = parse_int(view[12:16])
+        self.price = round(parse_int(view[16:20]) * _pt_to_price_mul[parse_int(view[20:24])], 4)
+        date_raw = str(parse_int(view[24:28]))
+        self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+class Quote:
+    def __init__(self):
+        self.ms_of_day = 0
+        self.bid_size = 0
+        self.bid_exchange = 0
+        self.bid_price = 0
+        self.bid_condition = 0
+        self.ask_size = 0
+        self.ask_exchange = 0
+        self.ask_price = 0
+        self.ask_condition = 0
+        self.date = None
+
+    def from_bytes(self, data: bytes):
+        view = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+        mult = _pt_to_price_mul[parse_int(view[36:40])]
+        self.ms_of_day     = parse_int(view[0:4])
+        self.bid_size      = parse_int(view[4:8])
+        self.bid_exchange  = parse_int(view[8:12])
+        self.bid_price     = round(parse_int(view[12:16]) * mult, 4)
+        self.bid_condition = parse_int(view[16:20])
+
+        self.ask_size = parse_int(view[20:24])
+        self.ask_exchange = parse_int(view[24:28])
+        self.ask_price = round(parse_int(view[28:32]) * mult, 4)
+        self.ask_condition = parse_int(view[32:36])
+        date_raw = str(parse_int(view[40:44]))
+        self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+
+class Contract:
+    def __init__(self):
+        self.root = ""
+        self.exp = None
+        self.strike = None
+        self.isCall = False
+        self.isOption = False
+
+    def from_bytes(self, data: bytes):
+        view = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+        # parse
+        len = parse_int(view[:1])
+        root_len = parse_int(view[1:2])
+        self.root = data[2:2 + root_len].decode("ascii")
+        self.isOption = data[root_len + 2] == 1
+        if not self.isOption:
+            return
+        date_raw = str(parse_int(view[root_len + 3: root_len + 7]))
+        self.exp = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+        self.isCall = parse_int(view[root_len + 7: root_len + 8]) == 1
+        self.strike = parse_int(view[root_len + 9: root_len + 13]) / 1000.0
+
+    def to_string(self) -> str:
+        return 'root: ' + self.root + ' isOption: ' + str(self.isOption) + ' exp: ' + str(self.exp) + \
+               ' strike: ' + str(self.strike) + ' isCall: ' + str(self.isCall)
+
+
+class StreamMsg:
+    def __init__(self):
+        self.type = StreamMsgType.ERROR
+        self.trade = Trade()
+        self.quote = Quote()
+        self.contract = Contract()
+
+
 class ThetaClient:
     """A high-level, blocking client used to fetch market data. Instantiating this class
     runs a java background process, which is responsible for the heavy lifting of market
@@ -58,6 +170,7 @@ class ThetaClient:
         self.port: int = port
         self.timeout = timeout
         self._server: Optional[socket.socket] = None  # None while disconnected
+        self._stream_server: Optional[socket.socket] = None  # None while disconnected
         self.launch = launch
 
         if launch:
@@ -100,6 +213,91 @@ class ThetaClient:
             if self.launch:
                 self.kill()
             self._server.close()
+
+    @contextmanager
+    def connect_stream(self, callback):
+        """Initiate a connection with the Theta Terminal Stream server on `localhost`.
+        Requests can only be made inside this generator aka the `with client.connect_stream()` block.
+
+        :raises ConnectionRefusedError: If the connection failed.
+        :raises TimeoutError: If the timeout is set and has been reached.
+        """
+
+        try:
+            for i in range(15):
+                try:
+                    self._stream_server = socket.socket()
+                    self._stream_server.connect(("localhost", 10000))
+                    self._stream_server.settimeout(1)
+                    break
+                except ConnectionError:
+                    if i == 14:
+                        raise ConnectionError('Unable to connect to the local Theta Terminal Stream process.'
+                                              ' Try restarting your system.')
+                    sleep(1)
+            self._stream_server.settimeout(self.timeout)
+            yield
+            Thread(target=self._recv_stream(callback)).start()
+        finally:
+            self._stream_server.close()
+
+    def req_full_trade_stream_opt(self):
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+    def req_trade_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&root={root}&exp={exp_fmt}&strike={strike}" \
+                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+    def req_quote_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&root={root}&exp={exp_fmt}&strike={strike}" \
+                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.QUOTE.value}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+    def _recv_stream(self, callback):
+        msg = StreamMsg()
+        parse_int = lambda d: int.from_bytes(d, "big")
+        while True:
+            msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
+            msg.contract.from_bytes(self._read_stream(parse_int(self._read_stream(1)[:1])))
+
+            if msg.type == StreamMsgType.QUOTE:
+                msg.quote.from_bytes(self._read_stream(44))
+            elif msg.type == StreamMsgType.TRADE:
+                data = self._read_stream(n_bytes=28)
+                msg.trade.from_bytes(data)
+            else:
+                continue
+            callback(msg)
+
+    def _read_stream(self, n_bytes: int) -> bytearray:
+        buffer = bytearray(self._stream_server.recv(n_bytes))
+        total = buffer.__len__()
+
+        while total < n_bytes:
+            part = self._stream_server.recv(n_bytes - total)
+            if part.__len__() < 0:
+                continue
+            total += part.__len__()
+            buffer.extend(part)
+
+        return buffer
 
     def _send_ver(self):
         """Sends this API version to the Theta Terminal."""

@@ -153,6 +153,8 @@ class MessageType(enum.Enum):
     ALL_DATES = 207
     AT_TIME = 208
     ALL_DATES_BULK = 209
+    STREAM_REQ = 210
+    STREAM_CALLBACK = 211
 
     # Experimental
     REQUEST_SERVER_LIST = 300
@@ -269,3 +271,47 @@ class DateRange:
         end = datetime.now().date()
         start = end - timedelta(days=n)
         return cls(start, end)
+
+
+@enum.unique
+class StreamMsgType(enum.Enum):
+    """Codes used to ID types of requests/responses."""
+
+    # Internal client communication
+    CREDENTIALS = 0
+    SESSION_TOKEN = 1
+    INFO = 2
+    METADATA = 3
+    CONNECTED = 4
+
+    # API communication
+    PING = 10
+    ERROR = 11
+    DISCONNECTED = 12
+    RECONNECTED = 13
+
+    # Client data
+    CONTRACT = 20
+    QUOTE = 21
+    TRADE = 22
+
+    # Experimental
+    REQUEST_SERVER_LIST = 300
+    REQUEST_OPTIMAL_SERVER = 301
+    OPTIMAL_SERVER = 302
+    PACKET = 303
+    BAN_IP = 304
+    POPULATION = 305
+
+    @classmethod
+    def from_code(cls, code: int) -> MessageType:
+        """Create a MessageType by its associated code.
+
+        :raises EnumParseError: If the code does not match a MessageType
+        """
+        for member in cls:
+            if code == member.value:
+                return member
+        raise exceptions._EnumParseError(code, cls)
+
+
