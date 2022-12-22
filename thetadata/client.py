@@ -21,7 +21,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.7.2'
+_VERSION = '0.7.0'
 
 
 def _format_strike(strike: float) -> int:
@@ -59,7 +59,10 @@ _pt_to_price_mul = [
 
 
 class Trade:
+    """Trade"""
     def __init__(self):
+        """from_bytes
+          """
         self.ms_of_day = 0
         self.sequence = 0
         self.size = 0
@@ -68,6 +71,8 @@ class Trade:
         self.date = None
 
     def from_bytes(self, data: bytearray):
+        """from_bytes
+          """
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         self.ms_of_day = parse_int(view[0:4])
@@ -78,8 +83,12 @@ class Trade:
         date_raw = str(parse_int(view[24:28]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
+
 class Quote:
+    """Quote"""
     def __init__(self):
+        """from_bytes
+          """
         self.ms_of_day = 0
         self.bid_size = 0
         self.bid_exchange = 0
@@ -92,6 +101,8 @@ class Quote:
         self.date = None
 
     def from_bytes(self, data: bytes):
+        """from_bytes
+          """
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         mult = _pt_to_price_mul[parse_int(view[36:40])]
@@ -110,7 +121,10 @@ class Quote:
 
 
 class Contract:
+    """Contract"""
     def __init__(self):
+        """from_bytes
+          """
         self.root = ""
         self.exp = None
         self.strike = None
@@ -118,6 +132,8 @@ class Contract:
         self.isOption = False
 
     def from_bytes(self, data: bytes):
+        """from_bytes
+        """
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         # parse
@@ -138,6 +154,7 @@ class Contract:
 
 
 class StreamMsg:
+    """Msg"""
     def __init__(self):
         self.type = StreamMsgType.ERROR
         self.trade = Trade()
@@ -242,6 +259,8 @@ class ThetaClient:
             self._stream_server.close()
 
     def req_full_trade_stream_opt(self):
+        """from_bytes
+          """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
 
         # send request
@@ -249,6 +268,8 @@ class ThetaClient:
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
     def req_trade_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        """from_bytes
+          """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
         # format data
         strike = _format_strike(strike)
@@ -260,6 +281,8 @@ class ThetaClient:
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
     def req_quote_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        """from_bytes
+          """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
         # format data
         strike = _format_strike(strike)
@@ -271,6 +294,8 @@ class ThetaClient:
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
     def _recv_stream(self, callback):
+        """from_bytes
+          """
         msg = StreamMsg()
         parse_int = lambda d: int.from_bytes(d, "big")
         while True:
@@ -287,6 +312,8 @@ class ThetaClient:
             callback(msg)
 
     def _read_stream(self, n_bytes: int) -> bytearray:
+        """from_bytes
+          """
         buffer = bytearray(self._stream_server.recv(n_bytes))
         total = buffer.__len__()
 
