@@ -10,7 +10,7 @@ from pathlib import Path
 
 import wget
 
-jdk_path = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal')\
+jdk_path = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal') \
     .joinpath('jdk-19.0.1').joinpath('bin')
 
 to_extract = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal')
@@ -47,14 +47,14 @@ def _verify_java():
     if not shutil.which("java"):
         print('Java 11 or higher is required to use this API. Please install Java on this machine.')
         exit(1)
-    version = subprocess.check_output(['java', '-version'], stderr=subprocess.STDOUT)
-    pattern = '\"(\d+\.\d+).*\"'
-    version = float(re.search(pattern, version.decode('utf8')).groups()[0])
+    # version = subprocess.check_output(['java', '-version'], stderr=subprocess.STDOUT)
+    # pattern = r'\"(\d+\.\d+).*\"'
+    # version = float(re.search(pattern, version.decode('utf8')).groups()[0])
 
-    if version < 11:
-        print('Java 11 or higher is required to use this API. You are using using Java '
-              + str(version) + '. Please upgrade to a newer version.')
-        exit(1)
+    # if version < 11:
+    #    print('Java 11 or higher is required to use this API. You are using using Java '
+    #          + str(version) + '. Please upgrade to a newer version.')
+    #    exit(1)
 
 
 def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool = True, jvm_mem: int = 0):
@@ -94,4 +94,3 @@ def check_download(auto_update: bool):
         with open('ThetaTerminal.jar', 'wb') as output:
             output.write(jar.read())
             output.close()
-

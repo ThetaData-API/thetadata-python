@@ -88,7 +88,7 @@ def _check_body_errors(header: Header, body_data: bytes):
                            helpful error message.
     """
     if header.message_type == MessageType.ERROR:
-        msg = body_data.decode("ascii")
+        msg = body_data.decode("utf-8")
         if "no data" in msg.lower():
             raise NoData(msg)
         elif "disconnected" in msg.lower():
