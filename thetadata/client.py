@@ -85,6 +85,11 @@ class Trade:
         date_raw = str(parse_int(view[28:32]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
+    def to_string(self) -> str:
+        return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
+                   ' condition: ' + str(self.condition) + ' price: ' + str(self.price) + ' exchange: ' + \
+               str(self.exchange.value[1]) + ' date: ' + str(self.date)
+
 
 class Quote:
     """Quote"""
@@ -325,7 +330,6 @@ class ThetaClient:
                 continue
             total += part.__len__()
             buffer.extend(part)
-
         return buffer
 
     def _send_ver(self):

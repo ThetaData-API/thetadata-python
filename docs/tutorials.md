@@ -236,6 +236,80 @@ Let's try a low-latency snapshot request for the most recent option quote availa
     0            57599990                  1                       1          6.05                     50                 63                      46          6.55                     50    2022-12-16
     ```
 
+## Streaming
+
+### Preface
+
+#### Definition
+
+Streaming is defined as receiving continuous updates for trades or quotes throughout 
+the trading day. It is much more performant when compared to snapshots.
+
+#### Responses
+
+You must implement a callback method as shown in the first example below. Each time a 
+``StreamMsg`` is received, this method will get called. A ``StreamMsg`` can either be
+a trade or quote.
+
+#### Limitations
+
+The Pro tier has the ability to request a trade stream for every option contract in
+existence and is able to have up to 15K quote streams. The Standard tier is only allowed
+5K combined quote / trade streams. Other tiers will not have access to streaming at this time.
+
+### Option Trades
+
+Below requests to receive continuous updates for trades for 4 NVDA option contracts. Notice 
+that these options expire today, so you may need to change the expiration dates to a date
+further in the future.
+
+=== "trade_streaming.py"
+
+    ```python
+    --8<-- "docs/options/trade_streaming.py"
+    ```
+
+    ```bash
+    > python trade_streaming.py
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 150.0 isCall: False
+    trade: ms_of_day: 35319636 sequence: 1297770003 size: 1 condition: 18 price: 2.29 exchange: ARCX date: 2022-12-23
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
+    trade: ms_of_day: 35319722 sequence: 1297772550 size: 1 condition: 18 price: 0.59 exchange: XBOS date: 2022-12-23
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
+    trade: ms_of_day: 35320534 sequence: 1297793907 size: 1 condition: 18 price: 0.59 exchange: XISX date: 2022-12-23
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
+    trade: ms_of_day: 35321269 sequence: 1297821400 size: 1 condition: 18 price: 0.6 exchange: ARCX date: 2022-12-23
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
+    trade: ms_of_day: 35321269 sequence: 1297821467 size: 1 condition: 18 price: 0.6 exchange: EDGX date: 2022-12-23
+    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
+    trade: ms_of_day: 35321269 sequence: 1297821468 size: 1 condition: 18 price: 0.6 exchange: BATS date: 2022-12-23
+    ```
+
+### Every Option Trade
+
+Below requests to receive continuous updates for every option trade. This method is only
+available to PRO subscribers.
+
+=== "trade_streaming_full.py"
+
+    ```python
+    --8<-- "docs/options/trade_streaming_full.py"
+    ```
+
+    ```bash
+    > python trade_streaming_full.py
+    con:root: SPXW isOption: True exp: 2023-01-06 strike: 3780.0 isCall: False
+    trade: ms_of_day: 40566197 sequence: 81076302 size: 4 condition: 4294967170 price: 35.15 exchange: XCBO date: 2022-12-23
+    con:root: CHWY isOption: True exp: 2023-01-20 strike: 42.5 isCall: False
+    trade: ms_of_day: 57375126 sequence: 3619080181 size: 1 condition: 4294967178 price: 4.55 exchange: XMIO date: 2022-12-23
+    con:root: TSLA isOption: True exp: 2022-12-23 strike: 132.0 isCall: True
+    trade: ms_of_day: 40566210 sequence: 796495932 size: 6 condition: 18 price: 0.15 exchange: XCBO date: 2022-12-23
+    con:root: TSLA isOption: True exp: 2022-12-23 strike: 132.0 isCall: True
+    trade: ms_of_day: 40566210 sequence: 796495933 size: 6 condition: 18 price: 0.15 exchange: XCBO date: 2022-12-23
+    con:root: SPY isOption: True exp: 2022-12-23 strike: 381.0 isCall: True
+    trade: ms_of_day: 41027015 sequence: 716643310 size: 6 condition: 125 price: 1.07 exchange: EDGX date: 2022-12-23
+    ```
+
 ## Historical NBBO Quotes
 
 This tutorial will provide examples for requesting historical & intraday
