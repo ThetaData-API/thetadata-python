@@ -98,13 +98,13 @@ class Quote:
           """
         self.ms_of_day = 0
         self.bid_size = 0
-        self.bid_exchange = 0
+        self.bid_exchange = None
         self.bid_price = 0
-        self.bid_condition = 0
+        self.bid_condition = None
         self.ask_size = 0
-        self.ask_exchange = 0
+        self.ask_exchange = None
         self.ask_price = 0
-        self.ask_condition = 0
+        self.ask_condition = None
         self.date = None
 
     def from_bytes(self, data: bytes):
@@ -115,23 +115,22 @@ class Quote:
         mult = _pt_to_price_mul[parse_int(view[36:40])]
         self.ms_of_day     = parse_int(view[0:4])
         self.bid_size      = parse_int(view[4:8])
-        self.bid_exchange  = parse_int(view[8:12])
+        self.bid_exchange  = Exchange.from_code(parse_int(view[8:12]))
         self.bid_price     = round(parse_int(view[12:16]) * mult, 4)
-        self.bid_condition = parse_int(view[16:20])
-
-        self.ask_size = parse_int(view[20:24])
-        self.ask_exchange = parse_int(view[24:28])
-        self.ask_price = round(parse_int(view[28:32]) * mult, 4)
-        self.ask_condition = parse_int(view[32:36])
-        date_raw = str(parse_int(view[40:44]))
-        self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+        self.bid_condition = QuoteCondition.from_code(parse_int(view[16:20]))
+        self.ask_size      = parse_int(view[20:24])
+        self.ask_exchange  = Exchange.from_code(parse_int(view[24:28]))
+        self.ask_price     = round(parse_int(view[28:32]) * mult, 4)
+        self.ask_condition = QuoteCondition.from_code(parse_int(view[32:36]))
+        date_raw           = str(parse_int(view[40:44]))
+        self.date          = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
     def to_string(self) -> str:
         return 'ms_of_day: ' + str(self.ms_of_day) + ' bid_size: ' + str(self.bid_size) + ' bid_exchange: ' + \
-               str(self.bid_exchange) + ' bid_price: ' + str(self.bid_price) + ' bid_condition: ' + \
-               str(self.bid_condition) + ' ask_size: ' + str(self.ask_size) + ' ask_exchange: ' + str(self.ask_exchange)\
-               + ' ask_price: ' + str(self.ask_price) + ' ask_condition: ' + str(self.ask_condition) + ' date: ' + \
-               str(self.date)
+               str(self.bid_exchange.value[1]) + ' bid_price: ' + str(self.bid_price) + ' bid_condition: ' + \
+               str(self.bid_condition.name) + ' ask_size: ' + str(self.ask_size) + ' ask_exchange: ' +\
+               str(self.ask_exchange.value[1]) + ' ask_price: ' + str(self.ask_price) + ' ask_condition: ' \
+               + str(self.ask_condition.name) + ' date: ' + str(self.date)
 
 
 class Contract:
@@ -321,6 +320,8 @@ class ThetaClient:
             elif msg.type == StreamMsgType.TRADE:
                 data = self._read_stream(n_bytes=32)
                 msg.trade.from_bytes(data)
+            elif msg.type == StreamMsgType.PING:
+                self._read_stream(n_bytes=4)
             else:
                 continue
             callback(msg)

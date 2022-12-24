@@ -304,7 +304,7 @@ class StreamMsgType(enum.Enum):
     POPULATION = 305
 
     @classmethod
-    def from_code(cls, code: int) -> MessageType:
+    def from_code(cls, code: int) -> StreamMsgType:
         """Create a MessageType by its associated code.
 
         :raises EnumParseError: If the code does not match a MessageType
@@ -313,6 +313,7 @@ class StreamMsgType(enum.Enum):
             if code == member.value:
                 return member
         raise exceptions._EnumParseError(code, cls)
+
 
 @enum.unique
 class Exchange(enum.Enum):
@@ -398,8 +399,9 @@ class Exchange(enum.Enum):
     TBA_77 = (77, "", "TBA Exchange 77")
     TBA_78 = (78, "", "TBA Exchange 78")
     TBA_79 = (79, "", "TBA Exchange 79")
+
     @classmethod
-    def from_code(cls, code: int) -> MessageType:
+    def from_code(cls, code: int) -> Exchange:
         """Create a MessageType by its associated code.
 
         :raises EnumParseError: If the code does not match a MessageType
@@ -410,4 +412,256 @@ class Exchange(enum.Enum):
         raise exceptions._EnumParseError(code, cls)
 
 
+@enum.unique
+class TradeCondition(enum.Enum):
+    """Codes used to ID types of requests/responses."""
 
+    REGULAR = 0
+    FORM_T = 1
+    OUT_OF_SEQ = 2
+    AVG_PRC = 3
+    AVG_PRC_NASDAQ = 4
+    OPEN_REPORT_LATE = 5
+    OPEN_REPORT_OUT_OF_SEQ = 6
+    OPEN_REPORT_IN_SEQ = 7
+    PRIOR_REFERENCE_PRICE = 8
+    NEXT_DAY_SALE = 9
+    BUNCHED = 10
+    CASH_SALE = 11
+    SELLER = 12
+    SOLD_LAST = 13
+    RULE_127 = 14
+    BUNCHED_SOLD = 15
+    NON_BOARD_LOT = 16
+    POSIT = 17
+    AUTO_EXECUTION = 18
+    HALT = 19
+    DELAYED = 20
+    REOPEN = 21
+    ACQUISITION = 22
+    CASH_MARKET = 23
+    NEXT_DAY_MARKET = 24
+    BURST_BASKET = 25
+    OPEN_DETAIL = 26
+    INTRA_DETAIL = 27
+    BASKET_ON_CLOSE = 28
+    RULE_155 = 29
+    DISTRIBUTION = 30
+    SPLIT = 31
+    RESERVED = 32
+    CUSTOM_BASKET_CROSS = 33
+    ADJ_TERMS = 34
+    SPREAD = 35
+    STRADDLE = 36
+    BUY_WRITE = 37
+    COMBO = 38
+    STPD = 39
+    CANC = 40
+    CANC_LAST = 41
+    CANC_OPEN = 42
+    CANC_ONLY = 43
+    CANC_STPD = 44
+    MATCH_CROSS = 45
+    FAST_MARKET = 46
+    NOMINAL = 47
+    CABINET = 48
+    BLANK_PRICE = 49
+    NOT_SPECIFIED = 50
+    MC_OFFICIAL_CLOSE = 51
+    SPECIAL_TERMS = 52
+    CONTINGENT_ORDER = 53
+    INTERNAL_CROSS = 54
+    STOPPED_REGULAR = 55
+    STOPPED_SOLD_LAST = 56
+    STOPPED_OUT_OF_SEQ = 57
+    BASIS = 58
+    VWAP = 59
+    SPECIAL_SESSION = 60
+    NANEX_ADMIN = 61
+    OPEN_REPORT = 62
+    MARKET_ON_CLOSE = 63
+    NOT_DEFINED = 64
+    OUT_OF_SEQ_PRE_MKT = 65
+    MC_OFFICIAL_OPEN = 66
+    FUTURES_SPREAD = 67
+    OPEN_RANGE = 68
+    CLOSE_RANGE = 69
+    NOMINAL_CABINET = 70
+    CHANGING_TRANS = 71
+    CHANGING_TRANS_CAB = 72
+    NOMINAL_UPDATE = 73
+    PIT_SETTLEMENT = 74
+    BLOCK_TRADE = 75
+    EXG_FOR_PHYSICAL = 76
+    VOLUME_ADJUSTMENT = 77
+    VOLATILITY_TRADE = 78
+    YELLOW_FLAG = 79
+    FLOOR_PRICE = 80
+    OFFICIAL_PRICE = 81
+    UNOFFICIAL_PRICE = 82
+    MID_BID_ASK_PRICE = 83
+    END_SESSION_HIGH = 84
+    END_SESSION_LOW = 85
+    BACKWARDATION = 86
+    CONTANGO = 87
+    HOLIDAY = 88
+    PRE_OPENING = 89
+    POST_FULL = 90
+    POST_RESTRICTED = 91
+    CLOSING_AUCTION = 92
+    BATCH = 93
+    TRADING = 94
+    INTERMARKET_SWEEP = 95
+    DERIVATIVE = 96
+    REOPENING = 97
+    CLOSING = 98
+    CAP_ELECTION = 99
+    SPOT_SETTLEMENT = 100
+    BASIS_HIGH = 101
+    BASIS_LOW = 102
+    YIELD = 103
+    PRICE_VARIATION = 104
+    STOCK_OPTION = 105
+    STOPPED_IM = 106
+    BENCHMARK = 107
+    TRADE_THRU_EXEMPT = 108
+    IMPLIED = 109
+    OTC = 110
+    TBA_111 = 111
+    TBA_112 = 112
+    TBA_113 = 113
+    TBA_114 = 114
+    TBA_115 = 115
+    TBA_116 = 116
+    TBA_117 = 117
+    TBA_118 = 118
+    TBA_119 = 119
+    TBA_120 = 120
+    TBA_121 = 121
+    TBA_122 = 122
+    TBA_123 = 123
+    TBA_124 = 124
+    TBA_125 = 125
+    TBA_126 = 126
+    TBA_127 = 127
+    TBA_128 = -128
+    TBA_129 = -127
+    TBA_130 = -126
+    TBA_131 = -125
+    TBA_132 = -124
+    TBA_133 = -123
+    TBA_134 = -122
+    TBA_135 = -121
+    TBA_136 = -120
+    TBA_137 = -119
+    TBA_138 = -118
+    TBA_139 = -117
+    TBA_140 = -116
+    TBA_141 = -115
+    TBA_142 = -114
+    TBA_143 = -113
+    TBA_144 = -112
+    TBA_145 = -111
+    TBA_146 = -110
+    TBA_147 = -109
+    TBA_148 = -108
+    UNDEFINED = 10000
+
+    @classmethod
+    def from_code(cls, code: int) -> TradeCondition:
+        """Create a MessageType by its associated code.
+
+        :raises EnumParseError: If the code does not match a MessageType
+        """
+        for member in cls:
+            if code == member.value:
+                return member
+        return TradeCondition.UNDEFINED
+
+
+@enum.unique
+class QuoteCondition(enum.Enum):
+    """Codes used to ID types of requests/responses."""
+
+    REGULAR = 0
+    BID_ASK_AUTO_EXEC = 1
+    ROTATION = 2
+    SPECIALIST_ASK = 3
+    SPECIALIST_BID = 4
+    LOCKED = 5
+    FAST_MARKET = 6
+    SPECIALIST_BID_ASK = 7
+    ONE_SIDE = 8
+    OPENING_QUOTE = 9
+    CLOSING_QUOTE = 10
+    MARKET_MAKER_CLOSED = 11
+    DEPTH_ON_ASK = 12
+    DEPTH_ON_BID = 13
+    DEPTH_ON_BID_ASK = 14
+    TIER_3 = 15
+    CROSSED = 16
+    HALTED = 17
+    OPERATIONAL_HALT = 18
+    NEWS = 19
+    NEWS_PENDING = 20
+    NON_FIRM = 21
+    DUE_TO_RELATED = 22
+    RESUME = 23
+    NO_MARKET_MAKERS = 24
+    ORDER_IMBALANCE = 25
+    ORDER_INFLUX = 26
+    INDICATED = 27
+    PRE_OPEN = 28
+    IN_VIEW_OF_COMMON = 29
+    RELATED_NEWS_PENDING = 30
+    RELATED_NEWS_OUT = 31
+    ADDITIONAL_INFO = 32
+    RELATED_ADDL_INFO = 33
+    NO_OPEN_RESUME = 34
+    DELETED = 35
+    REGULATORY_HALT = 36
+    SEC_SUSPENSION = 37
+    NON_COMLIANCE = 38
+    FILINGS_NOT_CURRENT = 39
+    CATS_HALTED = 40
+    CATS = 41
+    EX_DIV_OR_SPLIT = 42
+    UNASSIGNED = 43
+    INSIDE_OPEN = 44
+    INSIDE_CLOSED = 45
+    OFFER_WANTED = 46
+    BID_WANTED = 47
+    CASH = 48
+    INACTIVE = 49
+    NATIONAL_BBO = 50
+    NOMINAL = 51
+    CABINET = 52
+    NOMINAL_CABINET = 53
+    BLANK_PRICE = 54
+    SLOW_BID_ASK = 55
+    SLOW_LIST = 56
+    SLOW_BID = 57
+    SLOW_ASK = 58
+    BID_OFFER_WANTED = 59
+    SUB_PENNY = 60
+    NON_BBO = 61
+    TBA_62 = 62
+    TBA_63 = 63
+    TBA_64 = 64
+    TBA_65 = 65
+    TBA_66 = 66
+    TBA_67 = 67
+    TBA_68 = 68
+    TBA_69 = 69
+    UNDEFINED = 10000
+
+    @classmethod
+    def from_code(cls, code: int) -> QuoteCondition:
+        """Create a MessageType by its associated code.
+
+        :raises EnumParseError: If the code does not match a MessageType
+        """
+        for member in cls:
+            if code == member.value:
+                return member
+        return QuoteCondition.UNDEFINED
