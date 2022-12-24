@@ -126,6 +126,13 @@ class Quote:
         date_raw = str(parse_int(view[40:44]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
+    def to_string(self) -> str:
+        return 'ms_of_day: ' + str(self.ms_of_day) + ' bid_size: ' + str(self.bid_size) + ' bid_exchange: ' + \
+               str(self.bid_exchange) + ' bid_price: ' + str(self.bid_price) + ' bid_condition: ' + \
+               str(self.bid_condition) + ' ask_size: ' + str(self.ask_size) + ' ask_exchange: ' + str(self.ask_exchange)\
+               + ' ask_price: ' + str(self.ask_price) + ' ask_condition: ' + str(self.ask_condition) + ' date: ' + \
+               str(self.date)
+
 
 class Contract:
     """Contract"""

@@ -269,6 +269,8 @@ further in the future.
     --8<-- "docs/options/trade_streaming.py"
     ```
 
+=== "Output"
+
     ```bash
     > python trade_streaming.py
     con:root: NVDA isOption: True exp: 2022-12-23 strike: 150.0 isCall: False
@@ -295,6 +297,8 @@ available to PRO subscribers.
     ```python
     --8<-- "docs/options/trade_streaming_full.py"
     ```
+
+=== "Output"
 
     ```bash
     > python trade_streaming_full.py
