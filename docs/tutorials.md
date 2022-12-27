@@ -259,9 +259,8 @@ existence and is able to have up to 15K quote streams. The Standard tier is only
 
 ### Option Trades
 
-Below requests to receive continuous updates for trades for 4 NVDA option contracts. Notice 
-that these options expire today, so you may need to change the expiration dates to a date
-further in the future.
+Below requests to receive continuous updates for trades for a NVDA option contract. Notice 
+that these options are probably expired, so you may need to change the expiration date.
 
 === "trade_streaming.py"
 
@@ -273,18 +272,23 @@ further in the future.
 
     ```bash
     > python trade_streaming.py
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 150.0 isCall: False
-    trade: ms_of_day: 35319636 sequence: 1297770003 size: 1 condition: 18 price: 2.29 exchange: ARCX date: 2022-12-23
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
-    trade: ms_of_day: 35319722 sequence: 1297772550 size: 1 condition: 18 price: 0.59 exchange: XBOS date: 2022-12-23
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
-    trade: ms_of_day: 35320534 sequence: 1297793907 size: 1 condition: 18 price: 0.59 exchange: XISX date: 2022-12-23
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
-    trade: ms_of_day: 35321269 sequence: 1297821400 size: 1 condition: 18 price: 0.6 exchange: ARCX date: 2022-12-23
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
-    trade: ms_of_day: 35321269 sequence: 1297821467 size: 1 condition: 18 price: 0.6 exchange: EDGX date: 2022-12-23
-    con:root: NVDA isOption: True exp: 2022-12-23 strike: 145.0 isCall: False
-    trade: ms_of_day: 35321269 sequence: 1297821468 size: 1 condition: 18 price: 0.6 exchange: BATS date: 2022-12-23
+    ---------------------------------------------------------------------------
+    con:                         root: MSFT isOption: True exp: 2023-06-16 strike: 185.0 isCall: False
+    trade:                       ms_of_day: 54448612 sequence: 3464894509 size: 2 condition: AUTO_EXECUTION price: 4.95 exchange:  date: 2022-12-27
+    last quote at time of trade: ms_of_day: 54448612 bid_size: 2 bid_exchange:  bid_price: 4.95 bid_condition: NATIONAL_BBO ask_size: 27 ask_exchange: XBOS ask_price: 5.05 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: MSFT isOption: True exp: 2023-06-16 strike: 185.0 isCall: False
+    trade:                       ms_of_day: 54448614 sequence: 3464894620 size: 2 condition: INTERMARKET_SWEEP price: 4.95 exchange:  date: 2022-12-27
+    last quote at time of trade: ms_of_day: 54448613 bid_size: 1178 bid_exchange:  bid_price: 4.95 bid_condition: NATIONAL_BBO ask_size: 27 ask_exchange: XBOS ask_price: 5.05 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: UUP isOption: True exp: 2023-01-27 strike: 28.5 isCall: True
+    trade:                       ms_of_day: 46725445 sequence: 1876543798 size: 55 condition: AUTO_EXECUTION price: 0.23 exchange:  date: 2022-12-27
+    last quote at time of trade: ms_of_day: 46725445 bid_size: 1 bid_exchange: XNMS bid_price: 0.23 bid_condition: NATIONAL_BBO ask_size: 55 ask_exchange:  ask_price: 0.23 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: UNM isOption: True exp: 2023-03-17 strike: 42.5 isCall: True
+    trade:                       ms_of_day: 46725454 sequence: 1876544125 size: 1 condition: AUTO_EXECUTION price: 1.95 exchange: XNMS date: 2022-12-27
+    last quote at time of trade: ms_of_day: 46725454 bid_size: 33 bid_exchange: XBOS bid_price: 1.85 bid_condition: NATIONAL_BBO ask_size: 2 ask_exchange: XMIO ask_price: 2.0 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
     ```
 
 ### Every Option Trade
@@ -302,16 +306,23 @@ available to PRO subscribers.
 
     ```bash
     > python trade_streaming_full.py
-    con:root: SPXW isOption: True exp: 2023-01-06 strike: 3780.0 isCall: False
-    trade: ms_of_day: 40566197 sequence: 81076302 size: 4 condition: 4294967170 price: 35.15 exchange: XCBO date: 2022-12-23
-    con:root: CHWY isOption: True exp: 2023-01-20 strike: 42.5 isCall: False
-    trade: ms_of_day: 57375126 sequence: 3619080181 size: 1 condition: 4294967178 price: 4.55 exchange: XMIO date: 2022-12-23
-    con:root: TSLA isOption: True exp: 2022-12-23 strike: 132.0 isCall: True
-    trade: ms_of_day: 40566210 sequence: 796495932 size: 6 condition: 18 price: 0.15 exchange: XCBO date: 2022-12-23
-    con:root: TSLA isOption: True exp: 2022-12-23 strike: 132.0 isCall: True
-    trade: ms_of_day: 40566210 sequence: 796495933 size: 6 condition: 18 price: 0.15 exchange: XCBO date: 2022-12-23
-    con:root: SPY isOption: True exp: 2022-12-23 strike: 381.0 isCall: True
-    trade: ms_of_day: 41027015 sequence: 716643310 size: 6 condition: 125 price: 1.07 exchange: EDGX date: 2022-12-23
+    ---------------------------------------------------------------------------
+    con:                         root: SPY isOption: True exp: 2023-01-03 strike: 387.0 isCall: True
+    trade:                       ms_of_day: 45506758 sequence: 2502262221 size: 23 condition: AUTO_EXECUTION price: 1.56 exchange: BATS date: 2022-12-27
+    last quote at time of trade: ms_of_day: 45506758 bid_size: 159 bid_exchange: C2OX bid_price: 1.55 bid_condition: NATIONAL_BBO ask_size: 422 ask_exchange: MCRY ask_price: 1.57 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: NEE isOption: True exp: 2023-03-17 strike: 82.5 isCall: False
+    trade:                       ms_of_day: 52558559 sequence: 3375727498 size: 1 condition: AUTO_EXECUTION price: 3.5 exchange: XCBO date: 2022-12-27
+    last quote at time of trade: ms_of_day: 52558559 bid_size: 1266 bid_exchange: XPHL bid_price: 3.4 bid_condition: NATIONAL_BBO ask_size: 270 ask_exchange: XPHL ask_price: 3.6 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: TSLA isOption: True exp: 2023-01-27 strike: 95.0 isCall: False
+    trade:                       ms_of_day: 46432515 sequence: 2064836636 size: 1 condition: AUTO_EXECUTION price: 5.15 exchange: ARCX date: 2022-12-27
+    last quote at time of trade: ms_of_day: 46432515 bid_size: 852 bid_exchange: EDGX bid_price: 5.1 bid_condition: NATIONAL_BBO ask_size: 1 ask_exchange: ARCX ask_price: 5.15 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
+    con:                         root: USO isOption: True exp: 2023-01-06 strike: 80.0 isCall: False
+    trade:                       ms_of_day: 46432592 sequence: 1863359037 size: 1 condition: SINGLE_LEG_AUCTION_NON_ISO price: 9.8 exchange: XMIO date: 2022-12-27
+    last quote at time of trade: ms_of_day: 46429598 bid_size: 39 bid_exchange: XBOS bid_price: 9.55 bid_condition: NATIONAL_BBO ask_size: 39 ask_exchange: XBOS ask_price: 10.05 ask_condition: NATIONAL_BBO date: 2022-12-27
+    ---------------------------------------------------------------------------
     ```
 
 ### Every Open Interest
@@ -328,7 +339,7 @@ available to PRO subscribers.
 === "Output"
 
     ```bash
-    > python trade_streaming_full.py
+    > python open_interest_streaming.py
     con:root: ZROZ isOption: True exp: 2023-03-17 strike: 98.0 isCall: True open_interest: open_interest: 51 date: 2022-12-23
     con:root: XOM isOption: True exp: 2025-01-17 strike: 97.5 isCall: False open_interest: open_interest: 130 date: 2022-12-23
     con:root: XOP isOption: True exp: 2025-01-17 strike: 100.0 isCall: True open_interest: open_interest: 79 date: 2022-12-23

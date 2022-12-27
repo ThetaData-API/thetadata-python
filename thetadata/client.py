@@ -86,7 +86,7 @@ class Trade:
     def to_string(self) -> str:
         """String representation of a trade."""
         return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
-                   ' condition: ' + str(self.condition.name) + ' price: ' + str(self.price) + ' exchange: ' + \
+               ' condition: ' + str(self.condition.name) + ' price: ' + str(self.price) + ' exchange: ' + \
                str(self.exchange.value[1]) + ' date: ' + str(self.date)
 
 
@@ -222,6 +222,7 @@ class ThetaClient:
         self._server: Optional[socket.socket] = None  # None while disconnected
         self._stream_server: Optional[socket.socket] = None  # None while disconnected
         self.launch = launch
+        self._stream_impl = None
 
         if launch:
             if username == "default" or passwd == "default":
@@ -260,11 +261,8 @@ class ThetaClient:
             self._send_ver()
             yield
         finally:
-            if self.launch:
-                self.kill()
             self._server.close()
 
-    @contextmanager
     def connect_stream(self, callback):
         """Initiate a connection with the Theta Terminal Stream server on `localhost`.
         Requests can only be made inside this generator aka the `with client.connect_stream()` block.
@@ -274,24 +272,23 @@ class ThetaClient:
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
         """
+        for i in range(15):
+            try:
+                self._stream_server = socket.socket()
+                self._stream_server.connect(("localhost", 10000))
+                self._stream_server.settimeout(1)
+                break
+            except ConnectionError:
+                if i == 14:
+                    raise ConnectionError('Unable to connect to the local Theta Terminal Stream process. '
+                                          'Try restarting your system.')
+                sleep(1)
+        self._stream_server.settimeout(self.timeout)
+        self._stream_impl = callback
+        Thread(target=self._recv_stream).start()
 
-        try:
-            for i in range(15):
-                try:
-                    self._stream_server = socket.socket()
-                    self._stream_server.connect(("localhost", 10000))
-                    self._stream_server.settimeout(1)
-                    break
-                except ConnectionError:
-                    if i == 14:
-                        raise ConnectionError('Unable to connect to the local Theta Terminal Stream process.'
-                                              ' Try restarting your system.')
-                    sleep(1)
-            self._stream_server.settimeout(self.timeout)
-            yield
-            Thread(target=self._recv_stream(callback)).start()
-        finally:
-            self._stream_server.close()
+    def close_stream(self):
+        self._stream_server.close()
 
     def req_full_trade_stream_opt(self):
         """from_bytes
@@ -338,7 +335,7 @@ class ThetaClient:
                    f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.QUOTE.value}\n"
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
-    def _recv_stream(self, callback):
+    def _recv_stream(self):
         """from_bytes
           """
         msg = StreamMsg()
@@ -359,7 +356,7 @@ class ThetaClient:
                 msg.open_interest.from_bytes(data)
             else:
                 continue
-            callback(msg)
+            self._stream_impl(msg)
 
     def _read_stream(self, n_bytes: int) -> bytearray:
         """from_bytes

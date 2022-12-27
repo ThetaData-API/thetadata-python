@@ -5,9 +5,8 @@ def streaming():
     # Credentials now required because get_last is only available to ThetaData Standard & Pro subscribers.
     client = ThetaClient(username="MyThetaDataEmail", passwd="MyThetaDataPassword")
 
-    with client.connect_stream(callback):
-        # requests every option open interest update
-        client.req_full_open_interest_stream()
+    client.connect_stream(callback)  # You can stop streaming by calling client.close_stream
+    client.req_full_open_interest_stream()  # requests every option open interest update
 
 
 # User generated method that gets called each time a message from the stream arrives.
