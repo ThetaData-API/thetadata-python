@@ -294,6 +294,9 @@ class StreamMsgType(enum.Enum):
     CONTRACT = 20
     QUOTE = 21
     TRADE = 22
+    OPEN_INTEREST = 23
+
+    STOP = 30
 
     # Experimental
     REQUEST_SERVER_LIST = 300

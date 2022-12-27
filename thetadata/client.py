@@ -21,7 +21,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.7.5'
+_VERSION = '0.7.6'
 
 
 def _format_strike(strike: float) -> int:
@@ -66,7 +66,7 @@ class Trade:
         self.ms_of_day = 0
         self.sequence = 0
         self.size = 0
-        self.condition = 0
+        self.condition = TradeCondition.UNDEFINED
         self.price = 0
         self.exchange = None
         self.date = None
@@ -79,7 +79,7 @@ class Trade:
         self.ms_of_day = parse_int(view[0:4])
         self.sequence = parse_int(view[4:8]) & 0xffffffffffffffff
         self.size = parse_int(view[8:12])
-        self.condition = parse_int(view[12:16])
+        self.condition = TradeCondition.from_code(parse_int(view[12:16]))
         self.price = round(parse_int(view[16:20]) * _pt_to_price_mul[parse_int(view[24:28])], 4)
         self.exchange = Exchange.from_code(parse_int(view[20:24]))
         date_raw = str(parse_int(view[28:32]))
@@ -87,7 +87,7 @@ class Trade:
 
     def to_string(self) -> str:
         return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
-                   ' condition: ' + str(self.condition) + ' price: ' + str(self.price) + ' exchange: ' + \
+                   ' condition: ' + str(self.condition.name) + ' price: ' + str(self.price) + ' exchange: ' + \
                str(self.exchange.value[1]) + ' date: ' + str(self.date)
 
 
@@ -98,13 +98,13 @@ class Quote:
           """
         self.ms_of_day = 0
         self.bid_size = 0
-        self.bid_exchange = None
+        self.bid_exchange = Exchange.OPRA
         self.bid_price = 0
-        self.bid_condition = None
+        self.bid_condition = QuoteCondition.UNDEFINED
         self.ask_size = 0
-        self.ask_exchange = None
+        self.ask_exchange = Exchange.OPRA
         self.ask_price = 0
-        self.ask_condition = None
+        self.ask_condition = QuoteCondition.UNDEFINED
         self.date = None
 
     def from_bytes(self, data: bytes):
@@ -133,6 +133,27 @@ class Quote:
                + str(self.ask_condition.name) + ' date: ' + str(self.date)
 
 
+class OpenInterest:
+    """Trade"""
+    def __init__(self):
+        """from_bytes
+          """
+        self.open_interest = 0
+        self.date = None
+
+    def from_bytes(self, data: bytearray):
+        """from_bytes
+          """
+        view = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+        self.open_interest = parse_int(view[0:4])
+        date_raw = str(parse_int(view[4:8]))
+        self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+    def to_string(self) -> str:
+        return 'open_interest: ' + str(self.open_interest) + ' date: ' + str(self.date)
+
+
 class Contract:
     """Contract"""
     def __init__(self):
@@ -153,7 +174,9 @@ class Contract:
         len = parse_int(view[:1])
         root_len = parse_int(view[1:2])
         self.root = data[2:2 + root_len].decode("ascii")
-        self.isOption = data[root_len + 2] == 1
+
+        opt = parse_int(data[root_len + 2: root_len + 3])
+        self.isOption = opt == 1
         if not self.isOption:
             return
         date_raw = str(parse_int(view[root_len + 3: root_len + 7]))
@@ -172,6 +195,7 @@ class StreamMsg:
         self.type = StreamMsgType.ERROR
         self.trade = Trade()
         self.quote = Quote()
+        self.open_interest = OpenInterest()
         self.contract = Contract()
 
 
@@ -280,6 +304,16 @@ class ThetaClient:
         hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}\n"
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
+    def req_full_open_interest_stream(self):
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}" \
+                   f"&req={OptionReqType.OPEN_INTEREST.value}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
     def req_trade_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
         """from_bytes
           """
@@ -322,6 +356,9 @@ class ThetaClient:
                 msg.trade.from_bytes(data)
             elif msg.type == StreamMsgType.PING:
                 self._read_stream(n_bytes=4)
+            elif msg.type == StreamMsgType.OPEN_INTEREST:
+                data = self._read_stream(n_bytes=8)
+                msg.open_interest.from_bytes(data)
             else:
                 continue
             callback(msg)
