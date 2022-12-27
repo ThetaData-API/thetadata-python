@@ -59,10 +59,9 @@ _pt_to_price_mul = [
 
 
 class Trade:
-    """Trade"""
+    """Trade representing all values provided by the Thetadata stream."""
     def __init__(self):
-        """from_bytes
-          """
+        """Dummy constructor"""
         self.ms_of_day = 0
         self.sequence = 0
         self.size = 0
@@ -72,8 +71,7 @@ class Trade:
         self.date = None
 
     def from_bytes(self, data: bytearray):
-        """from_bytes
-          """
+        """Deserializes a trade."""
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         self.ms_of_day = parse_int(view[0:4])
@@ -86,16 +84,16 @@ class Trade:
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
     def to_string(self) -> str:
+        """String representation of a trade."""
         return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
                    ' condition: ' + str(self.condition.name) + ' price: ' + str(self.price) + ' exchange: ' + \
                str(self.exchange.value[1]) + ' date: ' + str(self.date)
 
 
 class Quote:
-    """Quote"""
+    """Quote representing all values provided by the Thetadata stream."""
     def __init__(self):
-        """from_bytes
-          """
+        """Dummy constructor"""
         self.ms_of_day = 0
         self.bid_size = 0
         self.bid_exchange = Exchange.OPRA
@@ -108,8 +106,7 @@ class Quote:
         self.date = None
 
     def from_bytes(self, data: bytes):
-        """from_bytes
-          """
+        """Deserializes a trade."""
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         mult = _pt_to_price_mul[parse_int(view[36:40])]
@@ -126,6 +123,7 @@ class Quote:
         self.date          = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
     def to_string(self) -> str:
+        """String representation of a quote."""
         return 'ms_of_day: ' + str(self.ms_of_day) + ' bid_size: ' + str(self.bid_size) + ' bid_exchange: ' + \
                str(self.bid_exchange.value[1]) + ' bid_price: ' + str(self.bid_price) + ' bid_condition: ' + \
                str(self.bid_condition.name) + ' ask_size: ' + str(self.ask_size) + ' ask_exchange: ' +\
@@ -134,16 +132,14 @@ class Quote:
 
 
 class OpenInterest:
-    """Trade"""
+    """Open Interest"""
     def __init__(self):
-        """from_bytes
-          """
+        """Dummy constructor"""
         self.open_interest = 0
         self.date = None
 
     def from_bytes(self, data: bytearray):
-        """from_bytes
-          """
+        """Deserializes open interest."""
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         self.open_interest = parse_int(view[0:4])
@@ -151,14 +147,14 @@ class OpenInterest:
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
     def to_string(self) -> str:
+        """String representation of open interest."""
         return 'open_interest: ' + str(self.open_interest) + ' date: ' + str(self.date)
 
 
 class Contract:
     """Contract"""
     def __init__(self):
-        """from_bytes
-          """
+        """Dummy constructor"""
         self.root = ""
         self.exp = None
         self.strike = None
@@ -166,8 +162,7 @@ class Contract:
         self.isOption = False
 
     def from_bytes(self, data: bytes):
-        """from_bytes
-        """
+        """Deserializes a contract."""
         view = memoryview(data)
         parse_int = lambda d: int.from_bytes(d, "big")
         # parse
@@ -185,12 +180,13 @@ class Contract:
         self.strike = parse_int(view[root_len + 9: root_len + 13]) / 1000.0
 
     def to_string(self) -> str:
+        """String representation of open interest."""
         return 'root: ' + self.root + ' isOption: ' + str(self.isOption) + ' exp: ' + str(self.exp) + \
                ' strike: ' + str(self.strike) + ' isCall: ' + str(self.isCall)
 
 
 class StreamMsg:
-    """Msg"""
+    """Stream Msg"""
     def __init__(self):
         self.type = StreamMsgType.ERROR
         self.trade = Trade()
@@ -272,6 +268,8 @@ class ThetaClient:
     def connect_stream(self, callback):
         """Initiate a connection with the Theta Terminal Stream server on `localhost`.
         Requests can only be made inside this generator aka the `with client.connect_stream()` block.
+        Responses to the provided callback method are recycled, meaning that if you send data received
+        in the callback method to another thread, you must create a copy of it first.
 
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
