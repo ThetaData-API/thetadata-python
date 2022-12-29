@@ -38,6 +38,6 @@ docs = [
 
 [project.urls]
 "Homepage" = "https://thetadata.net"
-"Source" = "https://thetadata-api.github.io/PythonAPI/reference/"
-"Bug Tracker" = "https://github.com/ThetaData-API/PythonAPI/issues"
-"Documentation" = "https://thetadata-api.github.io/PythonAPI/"
+"Source" = "https://thetadata-api.github.io/thetadata-python/reference/"
+"Bug Tracker" = "https://github.com/ThetaData-API/thetadata-python/issues"
+"Documentation" = "https://thetadata-api.github.io/thetadata-python/"
