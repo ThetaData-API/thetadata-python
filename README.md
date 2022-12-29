@@ -1,4 +1,4 @@
-# Theta Data Python API
+# thetadata Python API
 
 The [thetadata](https://thetadata.net) Python API provides low latency US equities & options data that may be used for
 market research or algorithmic trading applications.
