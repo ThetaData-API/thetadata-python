@@ -6,10 +6,10 @@ build-backend = "hatchling.build"
 name = "thetadata"
 version = "0.7.7"
 authors = [
-  { name="Adler Weber", email="redacted@thetadata.net" },
   { name="Bailey Danseglio", email="bailey@thetadata.net" },
+  { name="Adler Weber", email="redacted@thetadata.net" },
 ]
-description = "Python API for ThetaData"
+description = "Python API for Thetadata"
 readme = "README.md"
 license = { file="LICENSE" }
 requires-python = ">=3.7"
