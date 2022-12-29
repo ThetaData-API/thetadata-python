@@ -17,8 +17,8 @@ theme:
         icon: material/brightness-7 
         name: Switch to dark mode
 
-repo_url: https://github.com/ThetaData-API/PythonAPI
-repo_name: ThetaData-API/PythonAPI
+repo_url: https://github.com/ThetaData-API/thetadata-python
+repo_name: ThetaData-API/thetadata-python
 
 markdown_extensions:
   - pymdownx.highlight:
