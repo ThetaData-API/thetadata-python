@@ -1,5 +1,7 @@
 """Module that contains Theta Client class."""
+import datetime
 import struct
+import threading
 from decimal import Decimal
 from threading import Thread
 from time import sleep
@@ -21,7 +23,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.7.7'
+_VERSION = '0.7.8'
 
 
 def _format_strike(strike: float) -> int:
@@ -193,6 +195,7 @@ class StreamMsg:
         self.quote = Quote()
         self.open_interest = OpenInterest()
         self.contract = Contract()
+        self.date = None
 
 
 class ThetaClient:
@@ -223,7 +226,11 @@ class ThetaClient:
         self._stream_server: Optional[socket.socket] = None  # None while disconnected
         self.launch = launch
         self._stream_impl = None
+        self._stream_responses = {}
+        self._counter_lock = threading.Lock()
+        self._stream_req_id = 0
 
+        print('If you require API support, feel free to join our discord server! https://discord.thetadata.us')
         if launch:
             if username == "default" or passwd == "default":
                 print('------------------------------------------------------------------------------------------------')
@@ -290,26 +297,59 @@ class ThetaClient:
     def close_stream(self):
         self._stream_server.close()
 
-    def req_full_trade_stream_opt(self):
+    def req_full_trade_stream_opt(self, timeout: int = 5):
         """from_bytes
           """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
 
-        # send request
-        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}\n"
-        self._stream_server.sendall(hist_msg.encode("utf-8"))
-
-    def req_full_open_interest_stream(self):
-        """from_bytes
-          """
-        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
 
         # send request
         hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}" \
-                   f"&req={OptionReqType.OPEN_INTEREST.value}\n"
+                   f"&req={OptionReqType.TRADE.value}&id={req_id}\n"
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
-    def req_trade_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        tries = 0
+        lim = timeout * 100
+        while self._stream_responses[req_id] is None:  # This is kind of dumb.
+            sleep(.01)
+            tries += 1
+            if tries >= lim:
+                return StreamResponseType.TIMED_OUT
+
+        if self._stream_responses[req_id] is not StreamResponseType.SUBSCRIBED:
+            raise PermissionError("Invalid permissions for stream request: " + self._stream_responses[req_id].name)
+
+    def req_full_open_interest_stream(self, timeout: int = 5):
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&sec={SecType.OPTION.value}" \
+                   f"&req={OptionReqType.OPEN_INTEREST.value}&id={req_id}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+        tries = 0
+        lim = timeout * 100
+        while self._stream_responses[req_id] is None:  # This is kind of dumb.
+            sleep(.01)
+            tries += 1
+            if tries >= lim:
+                return StreamResponseType.TIMED_OUT
+
+        if self._stream_responses[req_id] is not StreamResponseType.SUBSCRIBED:
+            raise PermissionError("Invalid permissions for stream request: " + self._stream_responses[req_id].name)
+
+    def req_trade_stream_opt(self, root: str, exp: date = 0, strike: float = 0, right: OptionRight = 'C', timeout: int = 5):
         """from_bytes
           """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
@@ -317,12 +357,28 @@ class ThetaClient:
         strike = _format_strike(strike)
         exp_fmt = _format_date(exp)
 
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
         # send request
         hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&root={root}&exp={exp_fmt}&strike={strike}" \
-                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}\n"
+                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}&id={req_id}\n"
         self._stream_server.sendall(hist_msg.encode("utf-8"))
 
-    def req_quote_stream_opt(self, root: str, exp: date, strike: float, right: OptionRight):
+        tries = 0
+        lim = timeout * 100
+        while self._stream_responses[req_id] is None:  # This is kind of dumb.
+            sleep(.01)
+            tries += 1
+            if tries >= lim:
+                return StreamResponseType.TIMED_OUT
+
+        if self._stream_responses[req_id] is not StreamResponseType.SUBSCRIBED:
+            raise PermissionError("Invalid permissions for stream request: " + self._stream_responses[req_id].name)
+
+    def req_quote_stream_opt(self, root: str, exp: date = 0, strike: float = 0, right: OptionRight = 'C', timeout: int = 5):
         """from_bytes
           """
         assert self._stream_server is not None, _NOT_CONNECTED_MSG
@@ -330,16 +386,34 @@ class ThetaClient:
         strike = _format_strike(strike)
         exp_fmt = _format_date(exp)
 
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
         # send request
         hist_msg = f"MSG_CODE={MessageType.STREAM_REQ.value}&root={root}&exp={exp_fmt}&strike={strike}" \
-                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.QUOTE.value}\n"
+                   f"&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.QUOTE.value}&id={req_id}\n"
         self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+        tries = 0
+        lim = timeout * 100
+        while self._stream_responses[req_id] is None:  # This is kind of dumb.
+            sleep(.01)
+            tries += 1
+            if tries >= lim:
+                return StreamResponseType.TIMED_OUT
+
+        if self._stream_responses[req_id] is not StreamResponseType.SUBSCRIBED:
+            raise PermissionError("Invalid permissions for stream request: " + self._stream_responses[req_id].name)
 
     def _recv_stream(self):
         """from_bytes
           """
         msg = StreamMsg()
+
         parse_int = lambda d: int.from_bytes(d, "big")
+
         while True:
             msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
             msg.contract.from_bytes(self._read_stream(parse_int(self._read_stream(1)[:1])))
@@ -351,11 +425,20 @@ class ThetaClient:
                 msg.trade.from_bytes(data)
             elif msg.type == StreamMsgType.PING:
                 self._read_stream(n_bytes=4)
+                continue
             elif msg.type == StreamMsgType.OPEN_INTEREST:
                 data = self._read_stream(n_bytes=8)
                 msg.open_interest.from_bytes(data)
-            else:
+            elif msg.type == StreamMsgType.REQ_RESPONSE:
+                msg_id = parse_int(self._read_stream(4))
+                msg_rep = StreamResponseType.from_code(parse_int(self._read_stream(4)))
+                self._stream_responses[msg_id] = msg_rep
                 continue
+            elif msg.type == StreamMsgType.STOP or msg.type == StreamMsgType.START:
+                msg.date = datetime.strptime(str(parse_int(self._read_stream(4))), "%Y%m%d").date()
+            else:
+                raise ValueError('undefined msg type')
+
             self._stream_impl(msg)
 
     def _read_stream(self, n_bytes: int) -> bytearray:

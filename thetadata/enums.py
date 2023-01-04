@@ -296,15 +296,13 @@ class StreamMsgType(enum.Enum):
     TRADE = 22
     OPEN_INTEREST = 23
 
-    STOP = 30
+    # Tape commands
+    START = 30
+    RESTART = 31
+    STOP = 32
 
-    # Experimental
-    REQUEST_SERVER_LIST = 300
-    REQUEST_OPTIMAL_SERVER = 301
-    OPTIMAL_SERVER = 302
-    PACKET = 303
-    BAN_IP = 304
-    POPULATION = 305
+    # Misc
+    REQ_RESPONSE = 40
 
     @classmethod
     def from_code(cls, code: int) -> StreamMsgType:
@@ -668,3 +666,26 @@ class QuoteCondition(enum.Enum):
             if code == member.value:
                 return member
         return QuoteCondition.UNDEFINED
+
+
+@enum.unique
+class StreamResponseType(enum.Enum):
+    """Codes used to ID types of requests/responses."""
+
+    # Internal client communication
+    SUBSCRIBED = 0  # This doesn't guarantee you will get data back for the contract. It just means that if this contract exists, you will get data for it.
+    TIMED_OUT = 1  # The request to stream something timed out.
+    MAX_STREAMS_REACHED = 2  # Returned when you are streaming too many contracts.
+    INVALID_PERMS = 3  # If you do not have permissions for the stream request.
+
+    @classmethod
+    def from_code(cls, code: int) -> StreamResponseType:
+        """Create a MessageType by its associated code.
+
+        :raises EnumParseError: If the code does not match a MessageType
+        """
+        for member in cls:
+            if code == member.value:
+                return member
+        raise exceptions._EnumParseError(code, cls)
+
