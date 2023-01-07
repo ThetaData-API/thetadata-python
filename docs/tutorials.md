@@ -368,7 +368,7 @@ Once the reconnection has been reestablished, there is a ``RECONNECTED`` callbac
 === "connection_msgs.py"
 
     ```python
-    --8<-- "docs/options/connection_msgs.py"
+    --8<-- "docs/connection_msgs.py"
     ```
 
 
