@@ -351,7 +351,7 @@ available to PRO subscribers.
 
 ### Cancelling Streams
 
-You can cancel any stream you previously subscribed to by calling the remove stream methods.
+You can cancel any stream you previously subscribed to by using the remove stream methods.
 
 === "cancel_streams.py"
 
