@@ -8,8 +8,15 @@ def streaming():
     client = ThetaClient(username="MyThetaDataEmail", passwd="MyThetaDataPassword")
 
     client.connect_stream(callback)  # You can stop streaming by calling client.close_stream
-    # This contract is likely expired! Replace it with a contract that isn't expired
+    # Subscribes to a stream
     client.req_trade_stream_opt("NVDA", date(2023, 1, 13), 150, OptionRight.CALL)
+
+    # Unsubscribes from the stream
+    client.remove_trade_stream_opt("NVDA", date(2023, 1, 13), 150, OptionRight.CALL)
+
+    client.req_full_trade_stream_opt()  # Subscribes to every option trade.
+
+    client.remove_full_trade_stream_opt()  # Unsubscribes from the full option trade stream.
 
 
 # User generated method that gets called each time a message from the stream arrives.

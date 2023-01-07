@@ -155,6 +155,7 @@ class MessageType(enum.Enum):
     ALL_DATES_BULK = 209
     STREAM_REQ = 210
     STREAM_CALLBACK = 211
+    STREAM_REMOVE = 212
 
     # Experimental
     REQUEST_SERVER_LIST = 300

@@ -8,19 +8,13 @@ def streaming():
     client = ThetaClient(username="MyThetaDataEmail", passwd="MyThetaDataPassword")
 
     client.connect_stream(callback)  # You can stop streaming by calling client.close_stream
-    # This contract is likely expired! Replace it with a contract that isn't expired
-    client.req_trade_stream_opt("NVDA", date(2023, 1, 13), 150, OptionRight.CALL)
+    client.req_full_trade_stream_opt()  # Subscribes to every option trade.
 
 
 # User generated method that gets called each time a message from the stream arrives.
 def callback(msg: StreamMsg):
-    msg.type = msg.type
-
-    if msg.type == StreamMsgType.TRADE:
-        print('---------------------------------------------------------------------------')
-        print('con:                         ' + msg.contract.to_string())
-        print('trade:                       ' + msg.trade.to_string())
-        print('last quote at time of trade: ' + msg.quote.to_string())
+    if msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
+        print(msg.type.__str__())  # Handle disconnect / reconnect.
 
 
 if __name__ == "__main__":

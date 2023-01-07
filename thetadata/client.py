@@ -365,6 +365,66 @@ class ThetaClient:
         self._stream_server.sendall(hist_msg.encode("utf-8"))
         return req_id
 
+    def remove_full_trade_stream_opt(self) -> int:
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REMOVE.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}&id={req_id}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+        return req_id
+
+    def remove_full_open_interest_stream(self) -> id:
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REMOVE.value}&sec={SecType.OPTION.value}&req={OptionReqType.OPEN_INTEREST.value}&id={req_id}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+        return req_id
+
+    def remove_trade_stream_opt(self, root: str, exp: date = 0, strike: float = 0, right: OptionRight = 'C'):
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REMOVE.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.TRADE.value}&id={-1}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+
+    def remove_quote_stream_opt(self, root: str, exp: date = 0, strike: float = 0, right: OptionRight = 'C'):
+        """from_bytes
+          """
+        assert self._stream_server is not None, _NOT_CONNECTED_MSG
+        # format data
+        strike = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+
+        with self._counter_lock:
+            req_id = self._stream_req_id
+            self._stream_responses[req_id] = None
+            self._stream_req_id += 1
+
+        # send request
+        hist_msg = f"MSG_CODE={MessageType.STREAM_REMOVE.value}&root={root}&exp={exp_fmt}&strike={strike}&right={right.value}&sec={SecType.OPTION.value}&req={OptionReqType.QUOTE.value}&id={-1}\n"
+        self._stream_server.sendall(hist_msg.encode("utf-8"))
+        return req_id
+
     def verify(self, req_id: int, timeout: int = 5) -> StreamResponseType:
         tries = 0
         lim = timeout * 100
@@ -404,6 +464,8 @@ class ThetaClient:
                 self._stream_responses[msg.req_response_id] = msg.req_response
             elif msg.type == StreamMsgType.STOP or msg.type == StreamMsgType.START:
                 msg.date = datetime.strptime(str(parse_int(self._read_stream(4))), "%Y%m%d").date()
+            elif msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
+                self._read_stream(4)  # Future use.
             else:
                 raise ValueError('undefined msg type')
 
@@ -474,6 +536,8 @@ class ThetaClient:
                 pass
             else:
                 raise OSError
+
+    # HIST DATA
 
     def get_hist_option(
         self,

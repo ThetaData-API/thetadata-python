@@ -242,20 +242,20 @@ Let's try a low-latency snapshot request for the most recent option quote availa
 
 #### Definition
 
-Streaming is defined as receiving continuous updates for trades or quotes throughout 
+Streaming is defined as receiving continuous market data updates throughout 
 the trading day. It is much more performant when compared to snapshots.
 
 #### Responses
 
 You must implement a callback method as shown in the first example below. Each time a 
-``StreamMsg`` is received, this method will get called. A ``StreamMsg`` can either be
-a trade or quote.
+``StreamMsg`` is received, this method will get called. A ``StreamMsg`` has a ``StreamMsgType``, which
+can be used to determine the purpose of the message.
 
 #### Limitations
 
 The Pro tier has the ability to request a trade stream for every option contract in
 existence and is able to have up to 15K quote streams. The Standard tier is only allowed
-5K combined quote / trade streams. Other tiers will not have access to streaming at this time.
+5K quote streams and 10K trade streams. Other tiers do not have access to streaming at this time.
 
 ### Option Trades
 
@@ -348,6 +348,29 @@ available to PRO subscribers.
     con:root: XOP isOption: True exp: 2025-01-17 strike: 210.0 isCall: True open_interest: open_interest: 15 date: 2022-12-23
     con:root: XOP isOption: True exp: 2025-01-17 strike: 160.0 isCall: True open_interest: open_interest: 14 date: 2022-12-23
     ```
+
+### Cancelling Streams
+
+You can cancel any stream you previously subscribed to by calling the remove stream methods.
+
+=== "cancel_streams.py"
+
+    ```python
+    --8<-- "docs/options/cancel_streams.py"
+    ```
+
+
+### Handling a connection lost to server.
+
+If the connection between the API and ThetaData servers is lost, there is a ``DISCONNECTED`` callback. 
+Once the reconnection has been reestablished, there is a ``RECONNECTED`` callback.
+
+=== "connection_msgs.py"
+
+    ```python
+    --8<-- "docs/options/connection_msgs.py"
+    ```
+
 
 ## Historical NBBO Quotes
 
