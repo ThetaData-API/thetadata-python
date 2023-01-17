@@ -14,6 +14,7 @@ from pandas import DataFrame
 from tqdm import tqdm
 import pandas as pd
 
+from . import terminal
 from .enums import *
 from .parsing import (
     Header,
@@ -234,14 +235,15 @@ class ThetaClient:
 
         print('If you require API support, feel free to join our discord server! https://discord.thetadata.us')
         if launch:
+            terminal.kill_existing_terminal()
             if username == "default" or passwd == "default":
                 print('------------------------------------------------------------------------------------------------')
                 print("You are using the free version of Theta Data. You are currently limited to "
                       "20 requests / minute.\nA data subscription can be purchased at https://thetadata.net. "
                       "If you already have a ThetaData\nsubscription, specify the username and passwd parameters.")
                 print('------------------------------------------------------------------------------------------------')
-            check_download(auto_update)
-            Thread(target=launch_terminal, args=[username, passwd, use_bundle, jvm_mem]).start()
+            if check_download(auto_update):
+                Thread(target=launch_terminal, args=[username, passwd, use_bundle, jvm_mem, auto_update]).start()
         else:
             print("You are not launching the terminal. This means you should have an external instance already running.")
 

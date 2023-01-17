@@ -2,18 +2,22 @@ import os
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import urllib.request
 import zipfile
 from pathlib import Path
 
+import psutil
 import wget
 
 jdk_path = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal') \
     .joinpath('jdk-19.0.1').joinpath('bin')
 
 to_extract = Path.home().joinpath('ThetaData').joinpath('ThetaTerminal')
+
+_thetadata_jar = "ThetaTerminal.jar"
 
 
 def bar_progress(current, total, width=80):
@@ -52,12 +56,12 @@ def _verify_java():
     # version = float(re.search(pattern, version.decode('utf8')).groups()[0])
 
     # if version < 11:
-    #    print('Java 11 or higher is required to use this API. You are using using Java '
+    #    print('Java 11 or higher is required to use this API. You are using Java '
     #          + str(version) + '. Please upgrade to a newer version.')
     #    exit(1)
 
 
-def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool = True, jvm_mem: int = 0):
+def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool = True, jvm_mem: int = 0, move_jar: bool = True):
     cwd = None
     use_it = False
 
@@ -66,7 +70,8 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
 
     if use_it:
         cwd = jdk_path
-        shutil.move("ThetaTerminal.jar", str(cwd.joinpath('ThetaTerminal.jar')))
+        if move_jar:
+            shutil.move("ThetaTerminal.jar", str(cwd.joinpath('ThetaTerminal.jar')))
     else:
         _verify_java()
 
@@ -88,9 +93,49 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
         print(line.decode('utf-8').rstrip("\n"))
 
 
-def check_download(auto_update: bool):
-    if os.path.exists('ThetaTerminal.jar') or auto_update:
-        jar = urllib.request.urlopen("https://download-latest.thetadata.us")
-        with open('ThetaTerminal.jar', 'wb') as output:
-            output.write(jar.read())
-            output.close()
+def check_download(auto_update: bool) -> bool:
+    try:
+        if os.path.exists('ThetaTerminal.jar') or auto_update:
+            jar = urllib.request.urlopen("https://download-latest.thetadata.us")
+            with open('ThetaTerminal.jar', 'wb') as output:
+                output.write(jar.read())
+                output.close()
+        return True
+    except:
+        print('Unable to fetch the latest terminal version.')
+    return False
+
+
+def kill_existing_terminal() -> None:
+    """
+    Utility function to kill any ThetaData terminal processes by scanning all running proceeses
+    and killing such process
+    """
+    for pid in psutil.pids():
+        try:
+            cmdline_args = psutil.Process(pid=pid).cmdline()
+            for arg in cmdline_args:
+                if _thetadata_jar in arg:
+                    os.kill(pid, signal.SIGTERM)
+        except:
+            pass
+
+
+def is_terminal_instance_running() -> bool:
+    """
+    Checks if thetadata terminal is running or not
+    Returns:
+        bool: True if running else False
+    """
+    running = False
+    for pid in psutil.pids():
+        try:
+            cmdline_args = psutil.Process(pid=pid).cmdline()
+            for arg in cmdline_args:
+                if _thetadata_jar in arg:
+                    running = True
+                    break
+        except:
+            pass
+    return running
+
