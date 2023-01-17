@@ -1,6 +1,5 @@
 import os
 import platform
-import re
 import shutil
 import signal
 import subprocess

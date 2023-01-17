@@ -22,6 +22,8 @@ dependencies = [
   "tqdm",
   "pandas",
   "wget",
+  "psutil",
+
 ]
 
 [project.optional-dependencies]

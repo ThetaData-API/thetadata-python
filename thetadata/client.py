@@ -1,6 +1,5 @@
 """Module that contains Theta Client class."""
 import datetime
-import struct
 import threading
 from decimal import Decimal
 from threading import Thread
@@ -24,7 +23,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.8.0'
+_VERSION = '0.8.1'
 
 
 def _format_strike(strike: float) -> int:
