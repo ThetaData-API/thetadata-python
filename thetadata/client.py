@@ -23,7 +23,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.8.1'
+_VERSION = '0.8.2'
 
 
 def _format_strike(strike: float) -> int:
@@ -90,6 +90,40 @@ class Trade:
         return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
                ' condition: ' + str(self.condition.name) + ' price: ' + str(self.price) + ' exchange: ' + \
                str(self.exchange.value[1]) + ' date: ' + str(self.date)
+
+
+class OHLCVC:
+    """Trade representing all values provided by the Thetadata stream."""
+    def __init__(self):
+        """Dummy constructor"""
+        self.ms_of_day = 0
+        self.open = 0
+        self.high = 0
+        self.low = 0
+        self.close = 0
+        self.volume = 0
+        self.count = 0
+        self.date = None
+
+    def from_bytes(self, data: bytearray):
+        """Deserializes a trade."""
+        view = memoryview(data)
+        parse_int = lambda d: int.from_bytes(d, "big")
+        self.ms_of_day = parse_int(view[0:4])
+        self.open   = round(parse_int(view[4:8]) * _pt_to_price_mul[parse_int(view[28:32])], 4)
+        self.high   = round(parse_int(view[8:12]) * _pt_to_price_mul[parse_int(view[28:32])], 4)
+        self.low    = round(parse_int(view[12:16]) * _pt_to_price_mul[parse_int(view[28:32])], 4)
+        self.close  = round(parse_int(view[16:20]) * _pt_to_price_mul[parse_int(view[28:32])], 4)
+        self.volume = parse_int(view[20:24])
+        self.count  = parse_int(view[24:28])
+        date_raw = str(parse_int(view[32:36]))
+        self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+    def to_string(self) -> str:
+        """String representation of a trade."""
+        return 'ms_of_day: ' + str(self.ms_of_day) + ' open: ' + str(self.open) + ' high: ' + str(self.high) + \
+               ' low: ' + str(self.low) + ' close: ' + str(self.close) + ' volume: ' + str(self.volume) +\
+               ' count: ' + str(self.count) + ' date: ' + str(self.date)
 
 
 class Quote:
@@ -194,6 +228,7 @@ class StreamMsg:
         self.req_response = None
         self.req_response_id = None
         self.trade = Trade()
+        self.ohlcvc = OHLCVC()
         self.quote = Quote()
         self.open_interest = OpenInterest()
         self.contract = Contract()
@@ -232,7 +267,7 @@ class ThetaClient:
         self._counter_lock = threading.Lock()
         self._stream_req_id = 0
 
-        print('If you require API support, feel free to join our discord server! https://discord.thetadata.us')
+        print('If you require API support, feel free to join our discord server! http://discord.thetadata.us')
         if launch:
             terminal.kill_existing_terminal()
             if username == "default" or passwd == "default":
@@ -453,6 +488,9 @@ class ThetaClient:
             elif msg.type == StreamMsgType.TRADE:
                 data = self._read_stream(n_bytes=32)
                 msg.trade.from_bytes(data)
+            elif msg.type == StreamMsgType.OHLCVC:
+                data = self._read_stream(n_bytes=36)
+                msg.ohlcvc.from_bytes(data)
             elif msg.type == StreamMsgType.PING:
                 self._read_stream(n_bytes=4)
                 continue
@@ -468,7 +506,7 @@ class ThetaClient:
             elif msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
                 self._read_stream(4)  # Future use.
             else:
-                raise ValueError('undefined msg type')
+                raise ValueError('undefined msg type: ' + str(msg.type))
 
             self._stream_impl(msg)
 

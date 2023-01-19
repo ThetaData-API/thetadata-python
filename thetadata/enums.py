@@ -296,7 +296,7 @@ class StreamMsgType(enum.Enum):
     QUOTE = 21
     TRADE = 22
     OPEN_INTEREST = 23
-
+    OHLCVC = 24
     # Tape commands
     START = 30
     RESTART = 31
