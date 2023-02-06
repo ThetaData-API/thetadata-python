@@ -71,8 +71,8 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
         cwd = jdk_path
         if move_jar:
             shutil.move("ThetaTerminal.jar", str(cwd.joinpath('ThetaTerminal.jar')))
-    else:
-        _verify_java()
+    # else:
+    #    _verify_java()
 
     if jvm_mem > 0:
         if os.name != 'nt':
