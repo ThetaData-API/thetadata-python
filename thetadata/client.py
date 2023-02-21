@@ -241,15 +241,18 @@ class ThetaClient:
     data communication. Java 11 or higher is required to use this class."""
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True, jvm_mem: int = 0,
-                 username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True):
+                 username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True,
+                 host: str = "localhost", streaming_port: int = 10000):
         """Construct a client instance to interface with market data. If no username and passwd fields are provided,
             the terminal will connect to thetadata servers with free data permissions.
 
         :param port: The port number specified in the Theta Terminal config, which can usually be found under
                         %user.home%/ThetaData/ThetaTerminal.
+        :param streaming_port: The port number of Theta Terminal Stream server
+        :param host: The host name or IP address of Theta Terminal server
         :param timeout: The max number of seconds to wait for a response before throwing a TimeoutError
         :param launch: Launches the terminal if true; uses an existing external terminal instance if false.
-        :jvm_mem: Any integer provided above zero will force the terminal to allocate a maximum amount of memory in GB.
+        :param jvm_mem: Any integer provided above zero will force the terminal to allocate a maximum amount of memory in GB.
         :param username: Theta Data email. Can be omitted with passwd if using free data.
         :param passwd: Theta Data password. Can be omitted with username if using free data.
         :param auto_update: If true, this class will automatically download the latest terminal version each time
@@ -257,7 +260,9 @@ class ThetaClient:
             it will download the latest version.
         :param use_bundle: Will download / use open-jdk-19.0.1 if True and the operating system is windows.
         """
+        self.host: str = host
         self.port: int = port
+        self.streaming_port: int = streaming_port
         self.timeout = timeout
         self._server: Optional[socket.socket] = None  # None while disconnected
         self._stream_server: Optional[socket.socket] = None  # None while disconnected
@@ -283,7 +288,7 @@ class ThetaClient:
 
     @contextmanager
     def connect(self):
-        """Initiate a connection with the Theta Terminal on `localhost`. Requests can only be made inside this
+        """Initiate a connection with the Theta Terminal. Requests can only be made inside this
             generator aka the `with client.connect()` block.
 
         :raises ConnectionRefusedError: If the connection failed.
@@ -294,7 +299,7 @@ class ThetaClient:
             for i in range(15):
                 try:
                     self._server = socket.socket()
-                    self._server.connect(("localhost", self.port))
+                    self._server.connect((self.host, self.port))
                     self._server.settimeout(1)
                     break
                 except ConnectionError:
@@ -309,7 +314,7 @@ class ThetaClient:
             self._server.close()
 
     def connect_stream(self, callback):
-        """Initiate a connection with the Theta Terminal Stream server on `localhost`.
+        """Initiate a connection with the Theta Terminal Stream server.
         Requests can only be made inside this generator aka the `with client.connect_stream()` block.
         Responses to the provided callback method are recycled, meaning that if you send data received
         in the callback method to another thread, you must create a copy of it first.
@@ -320,7 +325,7 @@ class ThetaClient:
         for i in range(15):
             try:
                 self._stream_server = socket.socket()
-                self._stream_server.connect(("localhost", 10000))
+                self._stream_server.connect((self.host, self.streaming_port))
                 self._stream_server.settimeout(1)
                 break
             except ConnectionError:
