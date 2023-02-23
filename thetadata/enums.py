@@ -201,17 +201,87 @@ class OptionRight(enum.Enum):
 
 @enum.unique
 class OptionReqType(enum.Enum):
-    """Option request type codes."""
+    """
+    Option request type codes.
+
+    https://www.thetadata.net/request-types
+    """
 
     # FREE
     EOD = 1
+    """
+    End-Of-Day OHLC trade bars.
+
+    Returned columns:
+
+    DataType.DATE
+    DataType.OPEN
+    DataType.HIGH
+    DataType.LOW
+    DataType.CLOSE
+    DataType.VOLUME - number of contracts traded
+    DataType.COUNT - number of trades
+    """
 
     # VALUE
     QUOTE = 101
+    """
+    NBBO quotes with millisecond timestamps.
+
+    Either all quotes, if no interval specified, or interval-length snapshots (not OHLC).
+
+    Returned columns:
+
+    DataType.DATE
+    DataType.MS_OF_DAY - Snapshot time. Milliseconds since 00:00.000 ET.
+    DataType.BID_SIZE
+    DataType.BID_CONDITION
+    DataType.BID
+    DataType.BID_EXCHANGE
+    DataType.ASK_SIZE
+    DataType.ASK_CONDITION
+    DataType.ASK
+    DataType.ASK_EXCHANGE
+    """
+
     VOLUME = 102
     OPEN_INTEREST = 103
+    
     OHLC = 104
+    """
+    Interval-length OHLC trade bars. Interval must be provided.
+
+    Similar to EOD trade bars except with custom interval.
+
+    Returned columns:
+
+    DataType.DATE
+    DataType.MS_OF_DAY - Start of the interval. Milliseconds since 00:00.000 ET.
+    DataType.OPEN
+    DataType.HIGH
+    DataType.LOW
+    DataType.CLOSE
+    DataType.VOLUME - number of contracts traded
+    DataType.COUNT - number of trades
+    """
+
     OHLC_QUOTE = 105
+    """
+    Interval-length OHLC quote bars. Interval must be provided.
+
+    Prices are computed using bid/ask midpoint values.
+
+    Returned columns:
+
+    DataType.DATE
+    DataType.MS_OF_DAY - Start of the interval. Milliseconds since 00:00.000 ET.
+    DataType.OPEN
+    DataType.HIGH
+    DataType.LOW
+    DataType.CLOSE
+    DataType.VOLUME - cumulative bid/ask size within interval
+    DataType.COUNT - number of quotes within interval
+    """
 
     # STANDARD
     TRADE = 201
