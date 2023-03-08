@@ -16,6 +16,7 @@ class DataType(enum.Enum):
     MS_OF_DAY = (1, False)
     CORRECTION = (2, False)
     PRICE_TYPE = (4, False)
+    MS_OF_DAY2 = (5, False)
 
     # QUOTES
     BID_SIZE = (101, False)

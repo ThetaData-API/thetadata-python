@@ -101,7 +101,14 @@ def check_download(auto_update: bool) -> bool:
                 output.close()
         return True
     except:
-        print('Unable to fetch the latest terminal version. Please contact support.')
+        try:
+            if not os.path.exists('ThetaTerminal.jar') or auto_update:
+                jar = urllib.request.urlopen("http://download-latest.thetadata.us")
+                with open('ThetaTerminal.jar', 'wb') as output:
+                    output.write(jar.read())
+                    output.close()
+        except:
+            print('Unable to fetch the latest terminal version. Please contact support.')
     return False
 
 
