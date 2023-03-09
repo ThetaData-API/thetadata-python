@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thetadata"
-version = "0.8.7"
+version = "0.8.8"
 authors = [
   { name="Bailey Danseglio", email="bailey@thetadata.net" },
   { name="Adler Weber", email="redacted@thetadata.net" },
@@ -12,7 +12,7 @@ authors = [
 description = "Python API for Thetadata"
 readme = "README.md"
 license = { file="LICENSE" }
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
