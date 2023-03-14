@@ -23,7 +23,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.8.8'
+_VERSION = '0.8.9'
 
 
 def _format_strike(strike: float) -> int:
@@ -224,6 +224,7 @@ class Contract:
 class StreamMsg:
     """Stream Msg"""
     def __init__(self):
+        self.client = None
         self.type = StreamMsgType.ERROR
         self.req_response = None
         self.req_response_id = None
@@ -313,7 +314,7 @@ class ThetaClient:
         finally:
             self._server.close()
 
-    def connect_stream(self, callback):
+    def connect_stream(self, callback) -> Thread:
         """Initiate a connection with the Theta Terminal Stream server.
         Requests can only be made inside this generator aka the `with client.connect_stream()` block.
         Responses to the provided callback method are recycled, meaning that if you send data received
@@ -321,6 +322,7 @@ class ThetaClient:
 
         :raises ConnectionRefusedError: If the connection failed.
         :raises TimeoutError: If the timeout is set and has been reached.
+        :return: The thread that is responsible for receiving messages.
         """
         for i in range(15):
             try:
@@ -335,7 +337,9 @@ class ThetaClient:
                 sleep(1)
         self._stream_server.settimeout(self.timeout)
         self._stream_impl = callback
-        Thread(target=self._recv_stream).start()
+        out = Thread(target=self._recv_stream)
+        out.start()
+        return out
 
     def close_stream(self):
         self._stream_server.close()
@@ -481,39 +485,43 @@ class ThetaClient:
         """from_bytes
           """
         msg = StreamMsg()
-
+        msg.client = self
         parse_int = lambda d: int.from_bytes(d, "big")
 
         while True:
-            msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
-            msg.contract.from_bytes(self._read_stream(parse_int(self._read_stream(1)[:1])))
+            try:
+                msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
+                msg.contract.from_bytes(self._read_stream(parse_int(self._read_stream(1)[:1])))
+                if msg.type == StreamMsgType.QUOTE:
+                    msg.quote.from_bytes(self._read_stream(44))
+                elif msg.type == StreamMsgType.TRADE:
+                    data = self._read_stream(n_bytes=32)
+                    msg.trade.from_bytes(data)
+                elif msg.type == StreamMsgType.OHLCVC:
+                    data = self._read_stream(n_bytes=36)
+                    msg.ohlcvc.from_bytes(data)
+                elif msg.type == StreamMsgType.PING:
+                    self._read_stream(n_bytes=4)
+                    continue
+                elif msg.type == StreamMsgType.OPEN_INTEREST:
+                    data = self._read_stream(n_bytes=8)
+                    msg.open_interest.from_bytes(data)
+                elif msg.type == StreamMsgType.REQ_RESPONSE:
+                    msg.req_response_id = parse_int(self._read_stream(4))
+                    msg.req_response = StreamResponseType.from_code(parse_int(self._read_stream(4)))
+                    self._stream_responses[msg.req_response_id] = msg.req_response
+                elif msg.type == StreamMsgType.STOP or msg.type == StreamMsgType.START:
+                    msg.date = datetime.strptime(str(parse_int(self._read_stream(4))), "%Y%m%d").date()
+                elif msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
+                    self._read_stream(4)  # Future use.
+                else:
+                    raise ValueError('undefined msg type: ' + str(msg.type))
 
-            if msg.type == StreamMsgType.QUOTE:
-                msg.quote.from_bytes(self._read_stream(44))
-            elif msg.type == StreamMsgType.TRADE:
-                data = self._read_stream(n_bytes=32)
-                msg.trade.from_bytes(data)
-            elif msg.type == StreamMsgType.OHLCVC:
-                data = self._read_stream(n_bytes=36)
-                msg.ohlcvc.from_bytes(data)
-            elif msg.type == StreamMsgType.PING:
-                self._read_stream(n_bytes=4)
-                continue
-            elif msg.type == StreamMsgType.OPEN_INTEREST:
-                data = self._read_stream(n_bytes=8)
-                msg.open_interest.from_bytes(data)
-            elif msg.type == StreamMsgType.REQ_RESPONSE:
-                msg.req_response_id = parse_int(self._read_stream(4))
-                msg.req_response = StreamResponseType.from_code(parse_int(self._read_stream(4)))
-                self._stream_responses[msg.req_response_id] = msg.req_response
-            elif msg.type == StreamMsgType.STOP or msg.type == StreamMsgType.START:
-                msg.date = datetime.strptime(str(parse_int(self._read_stream(4))), "%Y%m%d").date()
-            elif msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
-                self._read_stream(4)  # Future use.
-            else:
-                raise ValueError('undefined msg type: ' + str(msg.type))
-
-            self._stream_impl(msg)
+                self._stream_impl(msg)
+            except ConnectionResetError:
+                msg.type = StreamMsgType.STREAM_DEAD
+                self._stream_impl(msg)
+                return
 
     def _read_stream(self, n_bytes: int) -> bytearray:
         """from_bytes

@@ -365,6 +365,7 @@ class StreamMsgType(enum.Enum):
     ERROR = 11
     DISCONNECTED = 12
     RECONNECTED = 13
+    STREAM_DEAD = 14
 
     # Client data
     CONTRACT = 20
