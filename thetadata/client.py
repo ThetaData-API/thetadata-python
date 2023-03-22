@@ -335,7 +335,7 @@ class ThetaClient:
                     raise ConnectionError('Unable to connect to the local Theta Terminal Stream process. '
                                           'Try restarting your system.')
                 sleep(1)
-        self._stream_server.settimeout(self.timeout)
+        self._stream_server.settimeout(10)
         self._stream_impl = callback
         out = Thread(target=self._recv_stream)
         out.start()
@@ -487,7 +487,7 @@ class ThetaClient:
         msg = StreamMsg()
         msg.client = self
         parse_int = lambda d: int.from_bytes(d, "big")
-
+        self._stream_server.settimeout(10)
         while True:
             try:
                 msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
@@ -502,7 +502,6 @@ class ThetaClient:
                     msg.ohlcvc.from_bytes(data)
                 elif msg.type == StreamMsgType.PING:
                     self._read_stream(n_bytes=4)
-                    continue
                 elif msg.type == StreamMsgType.OPEN_INTEREST:
                     data = self._read_stream(n_bytes=8)
                     msg.open_interest.from_bytes(data)
@@ -516,16 +515,19 @@ class ThetaClient:
                     self._read_stream(4)  # Future use.
                 else:
                     raise ValueError('undefined msg type: ' + str(msg.type))
-
-                self._stream_impl(msg)
             except ConnectionResetError:
                 msg.type = StreamMsgType.STREAM_DEAD
                 self._stream_impl(msg)
                 return
+            except Exception as e:
+                msg.type = StreamMsgType.ERROR
+                print('Stream error: ' + str(e))
+            self._stream_impl(msg)
 
     def _read_stream(self, n_bytes: int) -> bytearray:
         """from_bytes
           """
+
         buffer = bytearray(self._stream_server.recv(n_bytes))
         total = buffer.__len__()
 
