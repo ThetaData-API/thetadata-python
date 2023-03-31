@@ -1,6 +1,7 @@
 """Module that contains Theta Client class."""
 import datetime
 import threading
+import traceback
 from decimal import Decimal
 from threading import Thread
 from time import sleep
@@ -521,7 +522,8 @@ class ThetaClient:
                 return
             except Exception as e:
                 msg.type = StreamMsgType.ERROR
-                print('Stream error: ' + str(e))
+                print('Stream error for contract: ' + msg.contract.to_string())
+                traceback.print_exc()
             self._stream_impl(msg)
 
     def _read_stream(self, n_bytes: int) -> bytearray:
