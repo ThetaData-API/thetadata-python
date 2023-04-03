@@ -9,6 +9,7 @@ from typing import Optional
 from contextlib import contextmanager
 
 import socket
+import requests
 
 from pandas import DataFrame
 from tqdm import tqdm
@@ -909,6 +910,26 @@ class ThetaClient:
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size))
         return body.lst
+
+    def get_roots_REST(self, sec: SecType) -> pd.Series:
+        """
+        Get all roots for a certain security type.
+
+        :param sec: The type of security.
+
+        :return: All roots / underlyings / tickers / symbols for the security type.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        assert self._server is not None, _NOT_CONNECTED_MSG
+        url = "http://localhost:25510/list/roots"
+        headers = {"Content-Type": "application/json"}
+        params = {'sec': sec.value}
+        #make call
+        raw_json = requests.get(url, params=params).text
+        df = pd.read_json(raw_json, typ="series")
+        df = pd.Series(df['response'])
+        return df
 
     # LIVE DATA
 
