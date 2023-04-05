@@ -21,6 +21,7 @@ from .parsing import (
     Header,
     TickBody,
     ListBody,
+    parse_header_REST, parse_list_REST
 )
 from .terminal import check_download, launch_terminal
 
@@ -817,6 +818,38 @@ class ThetaClient:
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
+
+    def get_dates_opt_REST(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date,
+            strike: float,
+            right: OptionRight) -> pd.Series:
+        """
+        Get all dates of data available for a given options contract and request type.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD.
+        :param right:          The right of an options.
+
+        :return:               All dates that Theta Data provides data for given a request.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        req = req.name.lower()
+        exp_fmt = _format_date(exp)
+        strike_fmt = _format_strike(strike)
+        right = right.value
+        sec = SecType.OPTION.value.lower()
+        url = f"http://localhost:25510/list/dates/{sec}/{req}"
+        params = {'root': root, 'exp': exp_fmt, 'strike': strike_fmt, 'right': right}
+        # TODO: try using pd.read_json(url) to directly get dataframe from the URL
+        response = requests.get(url, params=params)
+        df = parse_list_REST(response, dates=True)
+        return df
 
     def get_dates_opt_bulk(
             self,

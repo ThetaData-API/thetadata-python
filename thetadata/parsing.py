@@ -1,7 +1,10 @@
 """Module that parses data from the Terminal."""
 from __future__ import annotations
+
+import json
 from typing import Optional
 
+import requests
 from tqdm import tqdm
 
 from dataclasses import dataclass
@@ -11,6 +14,8 @@ from pandas import DataFrame, Series
 from .exceptions import ResponseError, NoData, ResponseParseError, ReconnectingToServer
 from .enums import DataType, MessageType
 
+HEADER_MAX_LENGTH = 300  # max length of header in characters
+HEADER_FIELDS = ["id", "latency", "error_type", "error_msg", "next_page", "format"]
 
 @dataclass
 class Header:
@@ -78,6 +83,23 @@ class Header:
         )
 
 
+def parse_header_REST(response: requests.Response, header_string: str) -> dict:
+    """Parse JSON header data into an object.
+
+    :param response: the full requests.Response object
+    :param header_string: header data in a string of JSON format
+    :raises ResponseParseError: if parsing failed
+    """
+    # make sure to show the first URL in case of redirects
+    url = response.history[0].url if response.history else response.url
+    try:
+        return json.loads(header_string)
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
 def _check_body_errors(header: Header, body_data: bytes):
     """Check for errors from the Terminal.
 
@@ -89,6 +111,25 @@ def _check_body_errors(header: Header, body_data: bytes):
     """
     if header.message_type == MessageType.ERROR:
         msg = body_data.decode("utf-8")
+        if "no data" in msg.lower():
+            raise NoData(msg)
+        elif "disconnected" in msg.lower():
+            raise ReconnectingToServer(msg)
+        else:
+            raise ResponseError(msg)
+
+
+def _check_header_errors_REST(response: requests.Response, header: dict):
+    """Check for errors from the Terminal.
+
+    :raises NoData: if the server does not contain data for the request.
+    :raises ReconnectingToServer: if the connection has been lost to Theta Data and a
+                                  reconnection attempt is being made/
+    :raises ResponseError: if the header indicates an error, containing a
+                           helpful error message.
+    """
+    if header["error_type"].lower() != "null":
+        msg = header["error_msg"]
         if "no data" in msg.lower():
             raise NoData(msg)
         elif "disconnected" in msg.lower():
@@ -274,3 +315,31 @@ class ListBody:
             lst = pd.to_datetime(lst, format="%Y%m%d")
 
         return cls(lst=lst)
+
+
+def parse_list_REST(
+        response: requests.Response, dates: bool = False
+) -> pd.Series:
+    """Parse binary body data into an object.
+
+    :param response: the requests.Response object
+    :param dates: whether to parse the data as date objects
+    :raises ResponseParseError: if parsing failed
+    """
+    df = pd.read_json(response.text, typ="series")
+
+    header = df['header']
+
+    url = response.history[0].url if response.history else response.url
+
+    _check_header_errors_REST(response, header)
+
+    try:
+        df = pd.Series(df['response'])
+        if dates:
+            df = pd.to_datetime(df, format="%Y%m%d")
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
