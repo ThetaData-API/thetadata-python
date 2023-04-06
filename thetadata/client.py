@@ -943,6 +943,46 @@ class ThetaClient:
 
         return s
 
+
+    def get_strikes_REST(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
+        """
+        Get all options strike prices in US tenths of a cent.
+
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date.
+        :param date_range:     If specified, this function will return strikes only if they have data for every
+                                day in the date range.
+
+        :return:               The strike prices on the expiration.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        assert isinstance(exp, date)
+        exp_fmt = _format_date(exp)
+
+        url = "http://localhost:25510/list/strikes"
+        querystring = {"root": root, "exp": exp_fmt}
+        response = requests.get(url, params=querystring)
+
+        if date_range is not None:
+            start_fmt = _format_date(date_range.start)
+            end_fmt = _format_date(date_range.end)
+            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}&START_DATE={start_fmt}&END_DATE={end_fmt}\n"
+        else:
+            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
+
+        self._server.send(out.encode("utf-8"))
+        header = Header.parse(out, self._server.recv(20))
+        body = ListBody.parse(out, header, self._recv(header.size)).lst
+        div = Decimal(1000)
+        s = pd.Series([], dtype='float64')
+        c = 0
+        for i in body:
+            s[c] = Decimal(i) / div
+            c += 1
+
+        return s
+
     def get_roots(self, sec: SecType) -> pd.Series:
         """
         Get all roots for a certain security type.
