@@ -17,6 +17,7 @@ from .enums import DataType, MessageType
 HEADER_MAX_LENGTH = 300  # max length of header in characters
 HEADER_FIELDS = ["id", "latency", "error_type", "error_msg", "next_page", "format"]
 
+
 @dataclass
 class Header:
     """Represents the header returned on every Terminal call."""
@@ -271,6 +272,30 @@ class TickBody:
             )
 
 
+def parse_hist_REST(response: requests.Response, use_rth=False, progress_bar=False
+                    ) -> pd.DataFrame:
+    response_dict = response.json()
+    _check_header_errors_REST(response, response_dict["header"])
+
+    # Get column names from header "format" field and map them to correct type
+    cols = [DataType.from_string(name=c) for c in response_dict['header']['format']]
+    # Get the data rows from the "response" field
+    rows = response_dict['response']
+    # Create a pandas DataFrame
+    df = pd.DataFrame(rows, columns=cols)
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    url = response.history[0].url if response.history else response.url
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
 class ListBody:
     """Represents the body returned on every Terminal call that have one DataType."""
 
@@ -327,11 +352,8 @@ def parse_list_REST(
     :raises ResponseParseError: if parsing failed
     """
     df = pd.read_json(response.text, typ="series")
-
     header = df['header']
-
     url = response.history[0].url if response.history else response.url
-
     _check_header_errors_REST(response, header)
 
     try:
@@ -341,5 +363,5 @@ def parse_list_REST(
         return df
     except Exception as e:
         raise ResponseParseError(
-            f"Failed to parse header for request: {url}. Please send this error to support."
+            f"Failed to parse request: {url}. Please send this error to support."
         ) from e

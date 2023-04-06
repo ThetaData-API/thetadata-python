@@ -647,6 +647,51 @@ class ThetaClient:
         body: DataFrame = TickBody.parse(hist_msg, header, body_data)
         return body
 
+    def get_hist_option_REST(
+        self,
+        req: OptionReqType,
+        root: str,
+        exp: date,
+        strike: float,
+        right: OptionRight,
+        date_range: DateRange,
+        interval_size: int = 0,
+        use_rth: bool = True,
+        progress_bar: bool = False,
+    ) -> pd.DataFrame:
+        """
+         Get historical options data.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an option. CALL = Bullish; PUT = Bearish
+        :param date_range:     The dates to fetch.
+        :param interval_size:  The interval size in milliseconds. Applicable to most requests except ReqType.TRADE.
+        :param use_rth:        If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored
+                                  (only applicable to intervals requests).
+        :param progress_bar:   Print a progress bar displaying download progress.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        req_fmt = req.name.lower()
+        strike_fmt = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+        right_fmt = right.value
+
+        url = f"http://localhost:25510/hist/option/{req_fmt}"
+        querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
+                       "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt,
+                       "ivl": interval_size}
+        response = requests.get(url, params=querystring)
+        df = parse_hist_REST(response, use_rth, progress_bar)
+        return df
+
     def get_opt_at_time(
             self,
             req: OptionReqType,
@@ -769,6 +814,41 @@ class ThetaClient:
         body_data = self._recv(header.size, progress_bar=progress_bar)
         body: DataFrame = TickBody.parse(hist_msg, header, body_data)
         return body
+
+    def get_hist_stock_REST(
+            self,
+            req: StockReqType,
+            root: str,
+            date_range: DateRange,
+            interval_size: int = 0,
+            use_rth: bool = True,
+            progress_bar: bool = False,
+    ) -> pd.DataFrame:
+        """
+         Get historical stock data.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param date_range:     The dates to fetch.
+        :param interval_size:  The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
+        :param use_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
+        :param progress_bar:   Print a progress bar displaying download progress.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        # format data
+        req_fmt = req.name.lower()
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+
+        url = f"http://localhost:25510/hist/stock/{req_fmt}"
+        querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
+                       "ivl": interval_size}
+        response = requests.get(url, params=querystring)
+        df = parse_hist_REST(response, use_rth, progress_bar)
+        return df
 
     # LISTING DATA
 

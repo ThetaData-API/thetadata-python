@@ -111,6 +111,17 @@ class DataType(enum.Enum):
                 return member
         raise exceptions._EnumParseError(code, cls)
 
+    @classmethod
+    def from_string(cls, name)-> DataType:
+        """Create a DataType by its associated name.
+
+        :raises EnumParseError: If the string does not match a DataType
+        """
+        for member in cls:
+            if name == member.name.lower():
+                return member
+        raise exceptions._EnumParseError(name, cls)
+
     def code(self) -> int:
         """:return: The datatype code associated w this type."""
         return self.value[0]
