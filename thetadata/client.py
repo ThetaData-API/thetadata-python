@@ -1128,29 +1128,18 @@ class ThetaClient:
         """
         assert isinstance(exp, date)
         exp_fmt = _format_date(exp)
-
-        url = "http://localhost:25510/list/strikes"
-        querystring = {"root": root, "exp": exp_fmt}
-        response = requests.get(url, params=querystring)
-
+        root_fmt = root.lower()
         if date_range is not None:
             start_fmt = _format_date(date_range.start)
             end_fmt = _format_date(date_range.end)
-            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}&START_DATE={start_fmt}&END_DATE={end_fmt}\n"
+            querystring = {"root": root_fmt, "exp": exp_fmt}
         else:
-            out = f"MSG_CODE={MessageType.ALL_STRIKES.value}&root={root}&exp={exp_fmt}\n"
-
-        self._server.send(out.encode("utf-8"))
-        header = Header.parse(out, self._server.recv(20))
-        body = ListBody.parse(out, header, self._recv(header.size)).lst
-        div = Decimal(1000)
-        s = pd.Series([], dtype='float64')
-        c = 0
-        for i in body:
-            s[c] = Decimal(i) / div
-            c += 1
-
-        return s
+            querystring = {"root": root_fmt, "exp": exp_fmt}
+        url = "http://localhost:25510/list/strikes"
+        response = requests.get(url, params=querystring)
+        ser = parse_list_REST(response)
+        ser = ser.divide(1000)
+        return ser
 
     def get_roots(self, sec: SecType) -> pd.Series:
         """
