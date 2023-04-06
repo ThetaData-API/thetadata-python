@@ -892,6 +892,22 @@ class ThetaClient:
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
 
+    def get_expirations_REST(self, root: str) -> pd.Series:
+        """
+        Get all options expirations for a provided underlying root.
+
+        :param root:           The root / underlying / ticker / symbol.
+
+        :return:               All expirations that ThetaData provides data for.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        url = "http://localhost:25510/list/expirations"
+        params = {"root": root}
+        response = requests.get(url, params=params)
+        df = parse_list_REST(response)
+        return df
+
     def get_strikes(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
         """
         Get all options strike prices in US tenths of a cent.
