@@ -21,7 +21,7 @@ from .parsing import (
     Header,
     TickBody,
     ListBody,
-    parse_header_REST, parse_list_REST
+    parse_list_REST, parse_hist_REST
 )
 from .terminal import check_download, launch_terminal
 
@@ -737,6 +737,46 @@ class ThetaClient:
         body: DataFrame = TickBody.parse(hist_msg, header, body_data)
         return body
 
+    def get_opt_at_time_REST(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date,
+            strike: float,
+            right: OptionRight,
+            date_range: DateRange,
+            ms_of_day: int = 0,
+    ) -> pd.DataFrame:
+        """
+         Returns the last tick at a provided millisecond of the day for a given request type.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an option. CALL = Bullish; PUT = Bearish
+        :param date_range:     The dates to fetch.
+        :param ms_of_day:      The time of day in milliseconds.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        # format data
+        req_fmt = req.name.lower()
+        strike_fmt = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+        right_fmt = right.value
+
+        url = f"http://localhost:25510/at_time/option/{req_fmt}"
+        querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt, "strike": strike_fmt,
+                       "exp": exp_fmt, "right": right_fmt, "ivl": ms_of_day}
+        response = requests.get(url, params=querystring)
+        df = parse_hist_REST(response)
+        return df
+
     def get_stk_at_time(
             self,
             req: StockReqType,
@@ -773,6 +813,38 @@ class ThetaClient:
         body_data = self._recv(header.size, progress_bar=False)
         body: DataFrame = TickBody.parse(hist_msg, header, body_data)
         return body
+
+    def get_stk_at_time_REST(
+            self,
+            req: StockReqType,
+            root: str,
+            date_range: DateRange,
+            ms_of_day: int = 0,
+    ) -> pd.DataFrame:
+        """
+         Returns the last tick at a provided millisecond of the day for a given request type.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+        :param date_range:     The dates to fetch.
+        :param ms_of_day:      The time of day in milliseconds.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        req_fmt = req.name.lower()
+        root_fmt = root.lower()
+        start_fmt = _format_date(date_range.start)
+        end_fmt = _format_date(date_range.end)
+
+        url = f"http://localhost:25510/at_time/stock/{req_fmt}"
+        querystring = {"root": root_fmt, "start_date": start_fmt,
+                       "end_date": end_fmt, "ivl": ms_of_day}
+        response = requests.get(url, params=querystring)
+        print(response.url)
+        df = parse_hist_REST(response)
+        return df
 
     def get_hist_stock(
             self,
@@ -869,6 +941,23 @@ class ThetaClient:
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
+
+    def get_dates_stk_REST(self, root: str, req: StockReqType) -> pd.Series:
+        """
+        Get all dates of data available for a given stock contract and request type.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+
+        :return:               dAll dates that Theta Data provides data for given a request.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        url = "http://localhost:25510/list/dates/stock/quote"
+        params = {'root': root, 'req': req}
+        response = requests.get(url, params=params)
+        df = parse_list_REST(response, dates=True)
+        return df
 
     def get_dates_opt(
             self,
