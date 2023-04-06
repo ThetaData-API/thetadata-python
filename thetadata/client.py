@@ -1217,6 +1217,39 @@ class ThetaClient:
         )
         return body
 
+    def get_last_option_REST(
+        self,
+        req: OptionReqType,
+        root: str,
+        exp: date,
+        strike: float,
+        right: OptionRight,
+    ) -> pd.DataFrame:
+        """
+        Get the most recent options tick.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param exp:            The expiration date.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an options.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        root_fmt = root.lower()
+        req_fmt = req.name.lower()
+        right_fmt = right.value
+        strike_fmt = _format_strike(strike)
+        exp_fmt = _format_date(exp)
+
+        url = f"http://localhost:25510/snapshot/option/{req_fmt}"
+        querystring = {"root": root_fmt, "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt}
+        response = requests.get(url, params=querystring)
+        df = parse_flexible_REST(response)
+        return df
+
     def get_last_stock(
         self,
         req: StockReqType,
@@ -1244,6 +1277,33 @@ class ThetaClient:
             hist_msg, header, self._recv(header.size)
         )
         return body
+
+    def get_last_stock_REST(
+        self,
+        req: StockReqType,
+        root: str,
+    ) -> pd.DataFrame:
+        """
+        Get the most recent options tick.
+
+        :param req:            The request type.
+        :param root:           The root symbol.
+        :param exp:            The expiration date.
+        :param strike:         The strike price in USD, rounded to 1/10th of a cent.
+        :param right:          The right of an options.
+
+        :return:               The requested data as a pandas DataFrame.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        root_fmt = root.lower()
+        req_fmt = req.name.lower()
+
+        url = f"http://localhost:25510/snapshot/option/{req_fmt}"
+        querystring = {"root": root_fmt}
+        response = requests.get(url, params=querystring)
+        df = parse_flexible_REST(response)
+        return df
 
     def get_req(
         self,
