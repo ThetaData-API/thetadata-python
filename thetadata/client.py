@@ -1,6 +1,7 @@
 """Module that contains Theta Client class."""
 import datetime
 import threading
+import time
 import traceback
 from decimal import Decimal
 from threading import Thread
@@ -21,13 +22,13 @@ from .parsing import (
     Header,
     TickBody,
     ListBody,
-    parse_list_REST, parse_hist_REST
+    parse_list_REST, parse_flexible_REST, parse_hist_REST, parse_hist_REST_stream, parse_hist_REST_stream_ijson,
 )
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
 _VERSION = '0.9.0'
-
+URL_BASE = "http://localhost:25510/"
 
 def _format_strike(strike: float) -> int:
     """Round USD to the nearest tenth of a cent, acceptable by the terminal."""
@@ -657,7 +658,6 @@ class ThetaClient:
         date_range: DateRange,
         interval_size: int = 0,
         use_rth: bool = True,
-        progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
          Get historical options data.
@@ -671,7 +671,6 @@ class ThetaClient:
         :param interval_size:  The interval size in milliseconds. Applicable to most requests except ReqType.TRADE.
         :param use_rth:        If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored
                                   (only applicable to intervals requests).
-        :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -683,13 +682,18 @@ class ThetaClient:
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
         right_fmt = right.value
-
+        use_rth_fmt = str(use_rth).lower()
         url = f"http://localhost:25510/hist/option/{req_fmt}"
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
                        "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt,
-                       "ivl": interval_size}
+                       "ivl": interval_size, "rth": use_rth_fmt}
+        t1 = time.time()
         response = requests.get(url, params=querystring)
-        df = parse_hist_REST(response, use_rth, progress_bar)
+        t2 = time.time()
+        df = parse_flexible_REST(response)
+        t3 = time.time()
+        print(f'time for request.get: {t2-t1}')
+        print(f'time for parse_flexible_REST(): {t3-t2}')
         return df
 
     def get_opt_at_time(
@@ -774,7 +778,7 @@ class ThetaClient:
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt, "strike": strike_fmt,
                        "exp": exp_fmt, "right": right_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
-        df = parse_hist_REST(response)
+        df = parse_flexible_REST(response)
         return df
 
     def get_stk_at_time(
@@ -842,8 +846,7 @@ class ThetaClient:
         querystring = {"root": root_fmt, "start_date": start_fmt,
                        "end_date": end_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
-        print(response.url)
-        df = parse_hist_REST(response)
+        df = parse_flexible_REST(response)
         return df
 
     def get_hist_stock(
@@ -894,7 +897,6 @@ class ThetaClient:
             date_range: DateRange,
             interval_size: int = 0,
             use_rth: bool = True,
-            progress_bar: bool = False,
     ) -> pd.DataFrame:
         """
          Get historical stock data.
@@ -904,7 +906,6 @@ class ThetaClient:
         :param date_range:     The dates to fetch.
         :param interval_size:  The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
         :param use_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
-        :param progress_bar:   Print a progress bar displaying download progress.
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -914,12 +915,12 @@ class ThetaClient:
         req_fmt = req.name.lower()
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
-
+        use_rth_fmt = str(use_rth).lower()
         url = f"http://localhost:25510/hist/stock/{req_fmt}"
-        querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
-                       "ivl": interval_size}
-        response = requests.get(url, params=querystring)
-        df = parse_hist_REST(response, use_rth, progress_bar)
+        params = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
+                      "ivl": interval_size, "rth": use_rth_fmt}
+        response = requests.get(url, params=params)
+        df = parse_flexible_REST(response)
         return df
 
     # LISTING DATA
@@ -953,11 +954,13 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        url = "http://localhost:25510/list/dates/stock/quote"
-        params = {'root': root, 'req': req}
+        root_fmt = root.lower()
+        req_fmt = req.name.lower()
+        url = f"http://localhost:25510/list/dates/stock/{req_fmt}"
+        params = {'root': root_fmt}
         response = requests.get(url, params=params)
-        df = parse_list_REST(response, dates=True)
-        return df
+        series = parse_list_REST(response, dates=True)
+        return series
 
     def get_dates_opt(
             self,
@@ -1015,7 +1018,6 @@ class ThetaClient:
         sec = SecType.OPTION.value.lower()
         url = f"http://localhost:25510/list/dates/{sec}/{req}"
         params = {'root': root, 'exp': exp_fmt, 'strike': strike_fmt, 'right': right}
-        # TODO: try using pd.read_json(url) to directly get dataframe from the URL
         response = requests.get(url, params=params)
         df = parse_list_REST(response, dates=True)
         return df
@@ -1043,6 +1045,33 @@ class ThetaClient:
         header = Header.parse(out, self._server.recv(20))
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
+
+    def get_dates_opt_bulk_REST(
+            self,
+            req: OptionReqType,
+            root: str,
+            exp: date) -> pd.Series:
+        """
+        Get all dates of data available for a given options contract and request type.
+
+        :param req:            The request type.
+        :param root:           The root / underlying / ticker / symbol.
+        :param exp:            The expiration date. Must be after the start of `date_range`.
+        :param strike:         The strike price in USD.
+        :param right:          The right of an options.
+
+        :return:               All dates that Theta Data provides data for given a request.
+        :raises ResponseError: If the request failed.
+        :raises NoData:        If there is no data available for the request.
+        """
+        req = req.name.lower()
+        exp_fmt = _format_date(exp)
+        sec = SecType.OPTION.value.lower()
+        url = f"http://localhost:25510/list/dates/{sec}/{req}"
+        params = {'root': root, 'exp': exp_fmt}
+        response = requests.get(url, params=params)
+        df = parse_list_REST(response, dates=True)
+        return df
 
     def get_expirations(self, root: str) -> pd.Series:
         """
@@ -1168,14 +1197,10 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        assert self._server is not None, _NOT_CONNECTED_MSG
         url = "http://localhost:25510/list/roots"
-        headers = {"Content-Type": "application/json"}
         params = {'sec': sec.value}
-        #make call
-        raw_json = requests.get(url, params=params).text
-        df = pd.read_json(raw_json, typ="series")
-        df = pd.Series(df['response'])
+        response = requests.get(url, params=params)
+        df = parse_list_REST(response)
         return df
 
     # LIVE DATA

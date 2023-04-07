@@ -2,6 +2,12 @@
 from __future__ import annotations
 
 import json
+import urllib
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+import ijson
+import time
 from typing import Optional
 
 import requests
@@ -120,7 +126,7 @@ def _check_body_errors(header: Header, body_data: bytes):
             raise ResponseError(msg)
 
 
-def _check_header_errors_REST(response: requests.Response, header: dict):
+def _check_header_errors_REST(header: dict):
     """Check for errors from the Terminal.
 
     :raises NoData: if the server does not contain data for the request.
@@ -272,16 +278,37 @@ class TickBody:
             )
 
 
-def parse_hist_REST(response: requests.Response, use_rth=False, progress_bar=False
-                    ) -> pd.DataFrame:
+def parse_flexible_REST(response: requests.Response) -> pd.DataFrame:
+    """
+    Flexible parsing function that uses a python dictionary as an intermediary
+    between json string and pandas dataframe.
+    """
     response_dict = response.json()
-    _check_header_errors_REST(response, response_dict["header"])
-
-    # Get column names from header "format" field and map them to correct type
-    cols = [DataType.from_string(name=c) for c in response_dict['header']['format']]
-    # Get the data rows from the "response" field
+    _check_header_errors_REST(response_dict["header"])
+    cols = [DataType.from_string(name=col) for col in response_dict['header']['format']]
     rows = response_dict['response']
-    # Create a pandas DataFrame
+    df = pd.DataFrame(rows, columns=cols)
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {response.url}. Please send this error to support."
+        ) from e
+
+
+def parse_hist_REST(response: requests.Response) -> pd.DataFrame:
+    resp_split = response.text.split('"response": ')
+    to_lstrip = '"header": \t\n'
+    to_rstrip = ", \t\n"
+    header_str = resp_split[0][1:].lstrip(to_lstrip).rstrip(to_rstrip)
+    header = json.loads(header_str)
+    _check_header_errors_REST(header)
+    cols = [DataType.from_string(name=col) for col in header['format']]
+    rows = pd.read_json(resp_split[1][:-1], orient="table")
     df = pd.DataFrame(rows, columns=cols)
     if DataType.DATE in df.columns:
         df[DataType.DATE] = pd.to_datetime(
@@ -294,6 +321,60 @@ def parse_hist_REST(response: requests.Response, use_rth=False, progress_bar=Fal
         raise ResponseParseError(
             f"Failed to parse header for request: {url}. Please send this error to support."
         ) from e
+
+
+def parse_hist_REST_stream_ijson(url, params) -> pd.DataFrame:
+    url = url + '?' + urlencode(params)
+    f = urlopen(url)
+    header = {}
+    row = []
+    header_format = []
+    loc = 0
+    for prefix, event, value in ijson.parse(f, use_float=True):
+        if prefix == "response.item.item":
+            row.append(value)
+
+        elif prefix == "response.item" and event == "end_array":
+            df.loc[loc] = row
+            loc += 1
+            row = []
+
+        elif prefix == "header.format.item":
+            header_format.append(value)
+
+        elif prefix[:6] == "header" and len(prefix) > 6:
+            header[prefix[7:]] = value
+
+        elif event == "map_key" and value == "response":
+            header["format"] = header_format
+            _check_header_errors_REST(header)
+            cols = [DataType.from_string(name=col) for col in header['format']]
+            df = pd.DataFrame(columns=cols)
+            
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
+def parse_hist_REST_stream(url, params) -> pd.DataFrame:
+    header = {}
+    row = []
+    header_format = []
+    loc = 0
+    s = requests.Session()
+    with requests.get(url, params=params, stream=True) as resp:
+        line_num = 0
+        for line in resp.iter_lines():
+            print(line)
+            line_num += 1
+            if line_num > 10: break
 
 
 class ListBody:
@@ -342,9 +423,7 @@ class ListBody:
         return cls(lst=lst)
 
 
-def parse_list_REST(
-        response: requests.Response, dates: bool = False
-) -> pd.Series:
+def parse_list_REST(response: requests.Response, dates: bool = False) -> pd.Series:
     """Parse binary body data into an object.
 
     :param response: the requests.Response object
@@ -353,15 +432,13 @@ def parse_list_REST(
     """
     df = pd.read_json(response.text, typ="series")
     header = df['header']
-    url = response.history[0].url if response.history else response.url
-    _check_header_errors_REST(response, header)
-
+    _check_header_errors_REST(header)
     try:
-        df = pd.Series(df['response'])
+        df = pd.Series(df['response'], copy=False)
         if dates:
             df = pd.to_datetime(df, format="%Y%m%d")
         return df
     except Exception as e:
         raise ResponseParseError(
-            f"Failed to parse request: {url}. Please send this error to support."
+            f"Failed to parse request: {response.url}. Please send this error to support."
         ) from e
