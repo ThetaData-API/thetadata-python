@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thetadata"
-version = "0.9.0"
+version = "0.9.1"
 authors = [
   { name="Bailey Danseglio", email="bailey@thetadata.net" },
   { name="Adler Weber", email="redacted@thetadata.net" },
@@ -23,7 +23,7 @@ dependencies = [
   "pandas",
   "wget",
   "psutil",
-
+  "ijson",
 ]
 
 [project.optional-dependencies]
