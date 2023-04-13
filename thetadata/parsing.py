@@ -1,7 +1,16 @@
 """Module that parses data from the Terminal."""
 from __future__ import annotations
+
+import json
+import urllib
+from urllib.parse import urlencode
+from urllib.request import urlopen
+
+import ijson
+import time
 from typing import Optional
 
+import requests
 from tqdm import tqdm
 
 from dataclasses import dataclass
@@ -10,6 +19,9 @@ import numpy as np
 from pandas import DataFrame, Series
 from .exceptions import ResponseError, NoData, ResponseParseError, ReconnectingToServer
 from .enums import DataType, MessageType
+
+HEADER_MAX_LENGTH = 300  # max length of header in characters
+HEADER_FIELDS = ["id", "latency", "error_type", "error_msg", "next_page", "format"]
 
 
 @dataclass
@@ -78,6 +90,23 @@ class Header:
         )
 
 
+def parse_header_REST(response: requests.Response, header_string: str) -> dict:
+    """Parse JSON header data into an object.
+
+    :param response: the full requests.Response object
+    :param header_string: header data in a string of JSON format
+    :raises ResponseParseError: if parsing failed
+    """
+    # make sure to show the first URL in case of redirects
+    url = response.history[0].url if response.history else response.url
+    try:
+        return json.loads(header_string)
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
 def _check_body_errors(header: Header, body_data: bytes):
     """Check for errors from the Terminal.
 
@@ -89,6 +118,25 @@ def _check_body_errors(header: Header, body_data: bytes):
     """
     if header.message_type == MessageType.ERROR:
         msg = body_data.decode("utf-8")
+        if "no data" in msg.lower():
+            raise NoData(msg)
+        elif "disconnected" in msg.lower():
+            raise ReconnectingToServer(msg)
+        else:
+            raise ResponseError(msg)
+
+
+def _check_header_errors_REST(header: dict):
+    """Check for errors from the Terminal.
+
+    :raises NoData: if the server does not contain data for the request.
+    :raises ReconnectingToServer: if the connection has been lost to Theta Data and a
+                                  reconnection attempt is being made/
+    :raises ResponseError: if the header indicates an error, containing a
+                           helpful error message.
+    """
+    if header["error_type"].lower() != "null":
+        msg = header["error_msg"]
         if "no data" in msg.lower():
             raise NoData(msg)
         elif "disconnected" in msg.lower():
@@ -230,6 +278,105 @@ class TickBody:
             )
 
 
+def parse_flexible_REST(response: requests.Response) -> pd.DataFrame:
+    """
+    Flexible parsing function that uses a python dictionary as an intermediary
+    between json string and pandas dataframe.
+    """
+    response_dict = response.json()
+    _check_header_errors_REST(response_dict["header"])
+    cols = [DataType.from_string(name=col) for col in response_dict['header']['format']]
+    rows = response_dict['response']
+    df = pd.DataFrame(rows, columns=cols)
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {response.url}. Please send this error to support."
+        ) from e
+
+
+def parse_hist_REST(response: requests.Response) -> pd.DataFrame:
+    resp_split = response.text.split('"response": ')
+    to_lstrip = '"header": \t\n'
+    to_rstrip = ", \t\n"
+    header_str = resp_split[0][1:].lstrip(to_lstrip).rstrip(to_rstrip)
+    header = json.loads(header_str)
+    _check_header_errors_REST(header)
+    cols = [DataType.from_string(name=col) for col in header['format']]
+    rows = pd.read_json(resp_split[1][:-1], orient="table")
+    df = pd.DataFrame(rows, columns=cols)
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    url = response.history[0].url if response.history else response.url
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
+def parse_hist_REST_stream_ijson(url, params) -> pd.DataFrame:
+    url = url + '?' + urlencode(params)
+    f = urlopen(url)
+    header = {}
+    row = []
+    header_format = []
+    loc = 0
+    for prefix, event, value in ijson.parse(f, use_float=True):
+        if prefix == "response.item.item":
+            row.append(value)
+
+        elif prefix == "response.item" and event == "end_array":
+            df.loc[loc] = row
+            loc += 1
+            row = []
+
+        elif prefix == "header.format.item":
+            header_format.append(value)
+
+        elif prefix[:6] == "header" and len(prefix) > 6:
+            header[prefix[7:]] = value
+
+        elif event == "map_key" and value == "response":
+            header["format"] = header_format
+            _check_header_errors_REST(header)
+            cols = [DataType.from_string(name=col) for col in header['format']]
+            df = pd.DataFrame(columns=cols)
+            
+    if DataType.DATE in df.columns:
+        df[DataType.DATE] = pd.to_datetime(
+            df[DataType.DATE], format="%Y%m%d"
+        )
+    try:
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse header for request: {url}. Please send this error to support."
+        ) from e
+
+
+def parse_hist_REST_stream(url, params) -> pd.DataFrame:
+    header = {}
+    row = []
+    header_format = []
+    loc = 0
+    s = requests.Session()
+    with requests.get(url, params=params, stream=True) as resp:
+        line_num = 0
+        for line in resp.iter_lines():
+            print(line)
+            line_num += 1
+            if line_num > 10: break
+
+
 class ListBody:
     """Represents the body returned on every Terminal call that have one DataType."""
 
@@ -274,3 +421,24 @@ class ListBody:
             lst = pd.to_datetime(lst, format="%Y%m%d")
 
         return cls(lst=lst)
+
+
+def parse_list_REST(response: requests.Response, dates: bool = False) -> pd.Series:
+    """Parse binary body data into an object.
+
+    :param response: the requests.Response object
+    :param dates: whether to parse the data as date objects
+    :raises ResponseParseError: if parsing failed
+    """
+    df = pd.read_json(response.text, typ="series")
+    header = df['header']
+    _check_header_errors_REST(header)
+    try:
+        df = pd.Series(df['response'], copy=False)
+        if dates:
+            df = pd.to_datetime(df, format="%Y%m%d")
+        return df
+    except Exception as e:
+        raise ResponseParseError(
+            f"Failed to parse request: {response.url}. Please send this error to support."
+        ) from e

@@ -6,6 +6,7 @@ dev/
 JupyterNotebook/credentials.txt
 dev/err.py
 *.egg-info/
+*.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -18,3 +19,4 @@ PythonAPI.iml
 /resources/
 /resources/corretto-11.0.16.1-win/
 resources/
+*/ThetaTerminal.jar
