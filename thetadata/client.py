@@ -247,7 +247,7 @@ class ThetaClient:
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True, jvm_mem: int = 0,
                  username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True,
-                 host: str = "localhost", streaming_port: int = 10000):
+                 host: str = "localhost", streaming_port: int = 10000, stable: bool = True):
         """Construct a client instance to interface with market data. If no username and passwd fields are provided,
             the terminal will connect to thetadata servers with free data permissions.
 
@@ -286,7 +286,7 @@ class ThetaClient:
                       "20 requests / minute.\nA data subscription can be purchased at https://thetadata.net. "
                       "If you already have a ThetaData\nsubscription, specify the username and passwd parameters.")
                 print('------------------------------------------------------------------------------------------------')
-            if check_download(auto_update):
+            if check_download(auto_update, stable):
                 Thread(target=launch_terminal, args=[username, passwd, use_bundle, jvm_mem, auto_update]).start()
         else:
             print("You are not launching the terminal. This means you should have an external instance already running.")

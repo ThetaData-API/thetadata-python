@@ -92,10 +92,14 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
         print(line.decode('utf-8').rstrip("\n"))
 
 
-def check_download(auto_update: bool) -> bool:
+def check_download(auto_update: bool, stable: bool) -> bool:
+    if stable:
+        link = 'https://download-latest.thetadata.us'
+    else:
+        link = 'https://download-unstable.thetadata.us'
     try:
         if not os.path.exists('ThetaTerminal.jar') or auto_update:
-            jar = urllib.request.urlopen("https://download-latest.thetadata.us")
+            jar = urllib.request.urlopen(link)
             with open('ThetaTerminal.jar', 'wb') as output:
                 output.write(jar.read())
                 output.close()
@@ -103,7 +107,7 @@ def check_download(auto_update: bool) -> bool:
     except:
         try:
             if not os.path.exists('ThetaTerminal.jar') or auto_update:
-                jar = urllib.request.urlopen("http://download-latest.thetadata.us")
+                jar = urllib.request.urlopen(link)
                 with open('ThetaTerminal.jar', 'wb') as output:
                     output.write(jar.read())
                     output.close()
