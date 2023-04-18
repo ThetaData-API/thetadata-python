@@ -1,5 +1,5 @@
 """Module that contains Theta Client class."""
-import datetime
+from datetime import time
 import threading
 import time
 import traceback
@@ -27,8 +27,9 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.9.2'
-URL_BASE = "http://localhost:25510/"
+_VERSION = '0.9.3'
+URL_BASE = "http://127.0.0.1:25510/"
+
 
 def _format_strike(strike: float) -> int:
     """Round USD to the nearest tenth of a cent, acceptable by the terminal."""
@@ -38,6 +39,12 @@ def _format_strike(strike: float) -> int:
 def _format_date(dt: date) -> str:
     """Format a date obj into a string acceptable by the terminal."""
     return dt.strftime("%Y%m%d")
+
+
+def ms_to_time(ms_of_day: int) -> datetime.time:
+    return datetime(year=2000, month=1, day=1, hour=int((ms_of_day / (1000 * 60 * 60)) % 24),
+                    minute=int(ms_of_day / (1000 * 60)) % 60, second=int((ms_of_day / 1000) % 60),
+                    microsecond=(ms_of_day % 1000) * 1000).time()
 
 
 _pt_to_price_mul = [
@@ -89,6 +96,15 @@ class Trade:
         date_raw = str(parse_int(view[28:32]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
+    def copy_from(self, other_trade):
+        self.ms_of_day = other_trade.ms_of_day
+        self.sequence = other_trade.sequence
+        self.size = other_trade.size
+        self.condition = other_trade.condition
+        self.price = other_trade.price
+        self.exchange = other_trade.exchange
+        self.date = other_trade.date
+
     def to_string(self) -> str:
         """String representation of a trade."""
         return 'ms_of_day: ' + str(self.ms_of_day) + ' sequence: ' + str(self.sequence) + ' size: ' + str(self.size) + \
@@ -122,6 +138,16 @@ class OHLCVC:
         self.count  = parse_int(view[24:28])
         date_raw = str(parse_int(view[32:36]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+    def copy_from(self, other_ohlcvc):
+        self.ms_of_day = other_ohlcvc.ms_of_day
+        self.open = other_ohlcvc.open
+        self.high = other_ohlcvc.high
+        self.low = other_ohlcvc.low
+        self.close = other_ohlcvc.close
+        self.volume = other_ohlcvc.volume
+        self.count = other_ohlcvc.count
+        self.date = other_ohlcvc.date
 
     def to_string(self) -> str:
         """String representation of a trade."""
@@ -162,6 +188,18 @@ class Quote:
         date_raw           = str(parse_int(view[40:44]))
         self.date          = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
 
+    def copy_from(self, other_quote):
+        self.ms_of_day = other_quote.ms_of_day
+        self.bid_size = other_quote.bid_size
+        self.bid_exchange = other_quote.bid_exchange
+        self.bid_price = other_quote.bid_price
+        self.bid_condition = other_quote.bid_condition
+        self.ask_size = other_quote.ask_size
+        self.ask_exchange = other_quote.ask_exchange
+        self.ask_price = other_quote.ask_price
+        self.ask_condition = other_quote.ask_condition
+        self.date = other_quote.date
+
     def to_string(self) -> str:
         """String representation of a quote."""
         return 'ms_of_day: ' + str(self.ms_of_day) + ' bid_size: ' + str(self.bid_size) + ' bid_exchange: ' + \
@@ -185,6 +223,10 @@ class OpenInterest:
         self.open_interest = parse_int(view[0:4])
         date_raw = str(parse_int(view[4:8]))
         self.date = date(year=int(date_raw[0:4]), month=int(date_raw[4:6]), day=int(date_raw[6:8]))
+
+    def copy_from(self, other_open_interest):
+        self.open_interest = other_open_interest.open_interest
+        self.date = other_open_interest.date
 
     def to_string(self) -> str:
         """String representation of open interest."""
@@ -239,7 +281,6 @@ class StreamMsg:
         self.contract = Contract()
         self.date = None
 
-
 class ThetaClient:
     """A high-level, blocking client used to fetch market data. Instantiating this class
     runs a java background process, which is responsible for the heavy lifting of market
@@ -247,7 +288,7 @@ class ThetaClient:
 
     def __init__(self, port: int = 11000, timeout: Optional[float] = 60, launch: bool = True, jvm_mem: int = 0,
                  username: str = "default", passwd: str = "default", auto_update: bool = True, use_bundle: bool = True,
-                 host: str = "localhost", streaming_port: int = 10000, stable: bool = True):
+                 host: str = "127.0.0.1", streaming_port: int = 10000, stable: bool = True):
         """Construct a client instance to interface with market data. If no username and passwd fields are provided,
             the terminal will connect to thetadata servers with free data permissions.
 
@@ -683,7 +724,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
         right_fmt = right.value
         use_rth_fmt = str(use_rth).lower()
-        url = f"http://localhost:25510/hist/option/{req_fmt}"
+        url = f"http://127.0.0.1:25510/hist/option/{req_fmt}"
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
                        "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt,
                        "ivl": interval_size, "rth": use_rth_fmt}
@@ -774,7 +815,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
         right_fmt = right.value
 
-        url = f"http://localhost:25510/at_time/option/{req_fmt}"
+        url = f"http://127.0.0.1:25510/at_time/option/{req_fmt}"
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt, "strike": strike_fmt,
                        "exp": exp_fmt, "right": right_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
@@ -842,7 +883,7 @@ class ThetaClient:
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
 
-        url = f"http://localhost:25510/at_time/stock/{req_fmt}"
+        url = f"http://127.0.0.1:25510/at_time/stock/{req_fmt}"
         querystring = {"root": root_fmt, "start_date": start_fmt,
                        "end_date": end_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
@@ -916,7 +957,7 @@ class ThetaClient:
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
         use_rth_fmt = str(use_rth).lower()
-        url = f"http://localhost:25510/hist/stock/{req_fmt}"
+        url = f"http://127.0.0.1:25510/hist/stock/{req_fmt}"
         params = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
                       "ivl": interval_size, "rth": use_rth_fmt}
         response = requests.get(url, params=params)
@@ -956,7 +997,7 @@ class ThetaClient:
         """
         root_fmt = root.lower()
         req_fmt = req.name.lower()
-        url = f"http://localhost:25510/list/dates/stock/{req_fmt}"
+        url = f"http://127.0.0.1:25510/list/dates/stock/{req_fmt}"
         params = {'root': root_fmt}
         response = requests.get(url, params=params)
         series = parse_list_REST(response, dates=True)
@@ -1016,7 +1057,7 @@ class ThetaClient:
         strike_fmt = _format_strike(strike)
         right = right.value
         sec = SecType.OPTION.value.lower()
-        url = f"http://localhost:25510/list/dates/{sec}/{req}"
+        url = f"http://127.0.0.1:25510/list/dates/{sec}/{req}"
         params = {'root': root, 'exp': exp_fmt, 'strike': strike_fmt, 'right': right}
         response = requests.get(url, params=params)
         df = parse_list_REST(response, dates=True)
@@ -1067,7 +1108,7 @@ class ThetaClient:
         req = req.name.lower()
         exp_fmt = _format_date(exp)
         sec = SecType.OPTION.value.lower()
-        url = f"http://localhost:25510/list/dates/{sec}/{req}"
+        url = f"http://127.0.0.1:25510/list/dates/{sec}/{req}"
         params = {'root': root, 'exp': exp_fmt}
         response = requests.get(url, params=params)
         df = parse_list_REST(response, dates=True)
@@ -1100,7 +1141,7 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        url = "http://localhost:25510/list/expirations"
+        url = "http://127.0.0.1:25510/list/expirations"
         params = {"root": root}
         response = requests.get(url, params=params)
         df = parse_list_REST(response)
@@ -1164,7 +1205,7 @@ class ThetaClient:
             querystring = {"root": root_fmt, "exp": exp_fmt}
         else:
             querystring = {"root": root_fmt, "exp": exp_fmt}
-        url = "http://localhost:25510/list/strikes"
+        url = "http://127.0.0.1:25510/list/strikes"
         response = requests.get(url, params=querystring)
         ser = parse_list_REST(response)
         ser = ser.divide(1000)
@@ -1197,7 +1238,7 @@ class ThetaClient:
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        url = "http://localhost:25510/list/roots"
+        url = "http://127.0.0.1:25510/list/roots"
         params = {'sec': sec.value}
         response = requests.get(url, params=params)
         df = parse_list_REST(response)
@@ -1269,7 +1310,7 @@ class ThetaClient:
         strike_fmt = _format_strike(strike)
         exp_fmt = _format_date(exp)
 
-        url = f"http://localhost:25510/snapshot/option/{req_fmt}"
+        url = f"http://127.0.0.1:25510/snapshot/option/{req_fmt}"
         querystring = {"root": root_fmt, "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt}
         response = requests.get(url, params=querystring)
         df = parse_flexible_REST(response)
@@ -1324,7 +1365,7 @@ class ThetaClient:
         root_fmt = root.lower()
         req_fmt = req.name.lower()
 
-        url = f"http://localhost:25510/snapshot/option/{req_fmt}"
+        url = f"http://127.0.0.1:25510/snapshot/option/{req_fmt}"
         querystring = {"root": root_fmt}
         response = requests.get(url, params=querystring)
         df = parse_flexible_REST(response)
