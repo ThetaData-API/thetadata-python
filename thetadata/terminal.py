@@ -94,9 +94,9 @@ def launch_terminal(username: str = None, passwd: str = None, use_bundle: bool =
 
 def check_download(auto_update: bool, stable: bool) -> bool:
     if stable:
-        link = 'https://download-stable.thetadata.us'
+        link = 'http://download-stable.thetadata.us'
     else:
-        link = 'https://download-unstable.thetadata.us'
+        link = 'http://download-unstable.thetadata.us'
     try:
         if not os.path.exists('ThetaTerminal.jar') or auto_update:
             jar = urllib.request.urlopen(link)

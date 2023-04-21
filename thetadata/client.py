@@ -27,7 +27,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.9.4'
+_VERSION = '0.9.5'
 URL_BASE = "http://127.0.0.1:25510/"
 
 
