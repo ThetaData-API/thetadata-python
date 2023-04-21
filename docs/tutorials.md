@@ -253,9 +253,42 @@ can be used to determine the purpose of the message.
 
 #### Limitations
 
-The Pro tier has the ability to request a trade stream for every option contract in
-existence and is able to have up to 15K quote streams. The Standard tier is only allowed
-5K quote streams and 10K trade streams. Other tiers do not have access to streaming at this time.
+The Pro tier has the ability to request a trade stream for every option contract in existence and is able to 
+request up to 20K quote streams. The Standard tier can request 10K quote streams and 20K trade streams.
+Other tiers do not have access to streaming at this time.
+
+### Option Quotes
+
+Below requests to receive continuous updates for quote for an AAPL option contract. Notice 
+that these options are probably expired, so you may need to change the expiration date.
+
+=== "trade_streaming.py"
+
+    ```python
+    --8<-- "docs/options/quote_streaming.py"
+    ```
+
+=== "Output"
+
+    ```bash
+    > python trade_streaming.py
+    ---------------------------------------------------------------------------
+    con:    root: AAPL isOption: True exp: 2023-07-21 strike: 170.0 isCall: True
+    quote:  ms_of_day: 57061764 bid_size: 202 bid_exchange: EDGX bid_price: 6.35 bid_condition: NATIONAL_BBO ask_size: 742 ask_exchange: C2OX ask_price: 6.45 ask_condition: NATIONAL_BBO date: 2023-04-21
+    ---------------------------------------------------------------------------
+    con:    root: AAPL isOption: True exp: 2023-07-21 strike: 170.0 isCall: True
+    quote:  ms_of_day: 57061816 bid_size: 202 bid_exchange: EDGX bid_price: 6.35 bid_condition: NATIONAL_BBO ask_size: 742 ask_exchange: C2OX ask_price: 6.45 ask_condition: NATIONAL_BBO date: 2023-04-21
+    ---------------------------------------------------------------------------
+    con:    root: AAPL isOption: True exp: 2023-07-21 strike: 170.0 isCall: True
+    quote:  ms_of_day: 57061974 bid_size: 202 bid_exchange: EDGX bid_price: 6.35 bid_condition: NATIONAL_BBO ask_size: 742 ask_exchange: C2OX ask_price: 6.45 ask_condition: NATIONAL_BBO date: 2023-04-21
+    ---------------------------------------------------------------------------
+    con:    root: AAPL isOption: True exp: 2023-07-21 strike: 170.0 isCall: True
+    quote:  ms_of_day: 57061974 bid_size: 254 bid_exchange: C2OX bid_price: 6.35 bid_condition: NATIONAL_BBO ask_size: 742 ask_exchange: C2OX ask_price: 6.45 ask_condition: NATIONAL_BBO date: 2023-04-21
+    ---------------------------------------------------------------------------
+    con:    root: AAPL isOption: True exp: 2023-07-21 strike: 170.0 isCall: True
+    quote:  ms_of_day: 57062025 bid_size: 322 bid_exchange: C2OX bid_price: 6.35 bid_condition: NATIONAL_BBO ask_size: 742 ask_exchange: C2OX ask_price: 6.45 ask_condition: NATIONAL_BBO date: 2023-04-21
+    ---------------------------------------------------------------------------
+    ```
 
 ### Option Trades
 
@@ -328,7 +361,8 @@ available to PRO subscribers.
 ### Every Open Interest
 
 Below requests to receive continuous updates for every option open interest. This method is only
-available to PRO subscribers.
+available to PRO subscribers. Open Interest is generally reported at 06:30 ET. It is generally not updated during
+the trading day.
 
 === "open_interest_streaming.py"
 

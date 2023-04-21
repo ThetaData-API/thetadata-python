@@ -1,4 +1,6 @@
-from thetadata import ThetaClient, StreamMsg, StreamMsgType, StreamResponseType
+from datetime import date
+
+from thetadata import ThetaClient, OptionRight, StreamMsg, StreamMsgType, StreamResponseType
 
 
 def streaming():
@@ -6,14 +8,17 @@ def streaming():
     client = ThetaClient(username="MyThetaDataEmail", passwd="MyThetaDataPassword")
 
     client.connect_stream(callback)  # You can stop streaming by calling client.close_stream
-    req_id = client.req_full_trade_stream_opt()  # Requests every option trade (async).
+    # This contract is likely expired! Replace it with a contract that isn't expired
+    req_id = client.req_quote_stream_opt("AAPL", date(2023, 7, 21), 170, OptionRight.CALL)
 
     # Verify that the request to stream was successful.
     response = client.verify(req_id)
     if response == StreamResponseType.SUBSCRIBED:
-        print('Request to stream full trades successful.')
+        print('The request to stream option quotes was successful.')
     elif response == StreamResponseType.INVALID_PERMS:
-        print('Invalid permissions to stream full trades. Theta Data Options Pro account required.')
+        print('Invalid permissions to stream option quotes. Theta Data Options Standard or Pro account required.')
+    elif response == StreamResponseType.MAX_STREAMS_REACHED:
+        print('You have reached your limit for the amount of option contracts you can stream quotes for.')
     else:
         print('Unexpected stream response: ' + str(response))
 
@@ -22,11 +27,10 @@ def streaming():
 def callback(msg: StreamMsg):
     msg.type = msg.type
 
-    if msg.type == StreamMsgType.TRADE:
+    if msg.type == StreamMsgType.QUOTE:
         print('---------------------------------------------------------------------------')
-        print('con:                         ' + msg.contract.to_string())
-        print('trade:                       ' + msg.trade.to_string())
-        print('last quote at time of trade: ' + msg.quote.to_string())
+        print('con:    ' + msg.contract.to_string())
+        print('quote:  ' + msg.quote.to_string())
 
 
 if __name__ == "__main__":

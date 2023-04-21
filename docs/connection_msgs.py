@@ -13,8 +13,12 @@ def streaming():
 
 # User generated method that gets called each time a message from the stream arrives.
 def callback(msg: StreamMsg):
-    if msg.type == StreamMsgType.DISCONNECTED or msg.type == StreamMsgType.RECONNECTED:
-        print(msg.type.__str__())  # Handle disconnect / reconnect.
+    if msg.type == StreamMsgType.DISCONNECTED:
+        print('Lost connection to Theta Data servers')
+    if msg.type == StreamMsgType.STREAM_DEAD:
+        print('Lost connection to Theta Terminal, which is likely due the terminal being forcibly closed')
+    if msg.type == StreamMsgType.RECONNECTED:
+        print('The terminal has reconnected to Theta Data. You need to resubscribe to all streams.')
 
 
 if __name__ == "__main__":
