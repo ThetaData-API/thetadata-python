@@ -7,7 +7,7 @@ Please see this repository's [documentation](https://thetadata-api.github.io/the
 
 ## Installation
 
-Java 11 or higher is required. If you are on Windows, Java 19 will automatically be installed for you.
+Java 11 or higher is required. If you are on Windows, Java 19 will automatically be installed for you. Python 10 or higher is **highly** recommended.
 
 `pip install thetadata`
 
