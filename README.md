@@ -3,9 +3,7 @@
 The [Thetadata](https://thetadata.net) Python API provides low latency US equities & options data that may be used for
 market research or algorithmic trading applications.
 
-Please see this repository's [documentation](https://thetadata-api.github.io/thetadata-python) for more details.
-
-GitHub: https://github.com/ThetaData-API/thetadata-python
+Please see this repository's [documentation](https://thetadata-api.github.io/thetadata-python) and [GitHub](https://github.com/ThetaData-API/thetadata-python) for more details.
 
 ## Installation
 
