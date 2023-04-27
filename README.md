@@ -5,6 +5,8 @@ market research or algorithmic trading applications.
 
 Please see this repository's [documentation](https://thetadata-api.github.io/thetadata-python) for more details.
 
+GitHub: https://github.com/ThetaData-API/thetadata-python
+
 ## Installation
 
 Java 11 or higher is required. If you are on Windows, Java 19 will automatically be installed for you. Python 10 or higher is **highly** recommended.
