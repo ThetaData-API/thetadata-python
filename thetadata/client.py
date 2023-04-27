@@ -27,7 +27,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.9.6'
+_VERSION = '0.9.7'
 URL_BASE = "http://127.0.0.1:25510/"
 
 
@@ -281,6 +281,7 @@ class StreamMsg:
         self.contract = Contract()
         self.date = None
 
+
 class ThetaClient:
     """A high-level, blocking client used to fetch market data. Instantiating this class
     runs a java background process, which is responsible for the heavy lifting of market
@@ -317,6 +318,7 @@ class ThetaClient:
         self._stream_responses = {}
         self._counter_lock = threading.Lock()
         self._stream_req_id = 0
+        self._stream_connected = False
 
         print('If you require API support, feel free to join our discord server! http://discord.thetadata.us')
         if launch:
@@ -382,6 +384,7 @@ class ThetaClient:
                 sleep(1)
         self._stream_server.settimeout(10)
         self._stream_impl = callback
+        self._stream_connected = True
         out = Thread(target=self._recv_stream)
         out.start()
         return out
@@ -533,7 +536,7 @@ class ThetaClient:
         msg.client = self
         parse_int = lambda d: int.from_bytes(d, "big")
         self._stream_server.settimeout(10)
-        while True:
+        while self._stream_connected:
             try:
                 msg.type = StreamMsgType.from_code(parse_int(self._read_stream(1)[:1]))
                 msg.contract.from_bytes(self._read_stream(parse_int(self._read_stream(1)[:1])))
@@ -560,9 +563,10 @@ class ThetaClient:
                     self._read_stream(4)  # Future use.
                 else:
                     raise ValueError('undefined msg type: ' + str(msg.type))
-            except ConnectionResetError:
+            except (ConnectionResetError, OSError) as e:
                 msg.type = StreamMsgType.STREAM_DEAD
                 self._stream_impl(msg)
+                self._stream_connected = False
                 return
             except Exception as e:
                 msg.type = StreamMsgType.ERROR
