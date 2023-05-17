@@ -311,6 +311,8 @@ class OptionReqType(enum.Enum):
     GREEKS_SECOND_ORDER = 302
     GREEKS_THIRD_ORDER = 303
     ALT_CALCS = 304
+    TRADE_GREEKS_SECOND_ORDER = 305
+    TRADE_GREEKS_THIRD_ORDER = 306
 
 
 @enum.unique
