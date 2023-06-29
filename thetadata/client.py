@@ -27,7 +27,7 @@ from .parsing import (
 from .terminal import check_download, launch_terminal
 
 _NOT_CONNECTED_MSG = "You must establish a connection first."
-_VERSION = '0.9.8'
+_VERSION = '0.9.9'
 URL_BASE = "http://127.0.0.1:25510/"
 
 
@@ -42,6 +42,7 @@ def _format_date(dt: date) -> str:
 
 
 def ms_to_time(ms_of_day: int) -> datetime.time:
+    """Converts milliseconds of day to a time object."""
     return datetime(year=2000, month=1, day=1, hour=int((ms_of_day / (1000 * 60 * 60)) % 24),
                     minute=int(ms_of_day / (1000 * 60)) % 60, second=int((ms_of_day / 1000) % 60),
                     microsecond=(ms_of_day % 1000) * 1000).time()
