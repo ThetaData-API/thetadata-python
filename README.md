@@ -16,4 +16,4 @@ to get started.
 
 ## Contributing
 
-We welcome all feedback, whether it comes in the form of Github issues, pull requests, or pings in our [Discord](discord.thetadata.us)!
+We welcome all feedback, whether it comes in the form of Github issues, pull requests, or pings in our [Discord](https://discord.thetadata.us)!
