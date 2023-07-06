@@ -704,6 +704,8 @@ class ThetaClient:
         date_range: DateRange,
         interval_size: int = 0,
         use_rth: bool = True,
+        host: str = "127.0.0.1",
+        port: str = "25510"
     ) -> pd.DataFrame:
         """
          Get historical options data.
@@ -717,6 +719,8 @@ class ThetaClient:
         :param interval_size:  The interval size in milliseconds. Applicable to most requests except ReqType.TRADE.
         :param use_rth:        If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored
                                   (only applicable to intervals requests).
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -729,7 +733,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
         right_fmt = right.value
         use_rth_fmt = str(use_rth).lower()
-        url = f"http://127.0.0.1:25510/hist/option/{req_fmt}"
+        url = f"http://{host}:{port}/hist/option/{req_fmt}"
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
                        "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt,
                        "ivl": interval_size, "rth": use_rth_fmt}
@@ -796,6 +800,8 @@ class ThetaClient:
             right: OptionRight,
             date_range: DateRange,
             ms_of_day: int = 0,
+            host: str = "127.0.0.1",
+            port: str = "25510"
     ) -> pd.DataFrame:
         """
          Returns the last tick at a provided millisecond of the day for a given request type.
@@ -807,6 +813,8 @@ class ThetaClient:
         :param right:          The right of an option. CALL = Bullish; PUT = Bearish
         :param date_range:     The dates to fetch.
         :param ms_of_day:      The time of day in milliseconds.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -820,7 +828,7 @@ class ThetaClient:
         end_fmt = _format_date(date_range.end)
         right_fmt = right.value
 
-        url = f"http://127.0.0.1:25510/at_time/option/{req_fmt}"
+        url = f"http://{host}:{port}/at_time/option/{req_fmt}"
         querystring = {"root": root, "start_date": start_fmt, "end_date": end_fmt, "strike": strike_fmt,
                        "exp": exp_fmt, "right": right_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
@@ -870,6 +878,8 @@ class ThetaClient:
             root: str,
             date_range: DateRange,
             ms_of_day: int = 0,
+            host: str = "127.0.0.1",
+            port: str = "25510"
     ) -> pd.DataFrame:
         """
          Returns the last tick at a provided millisecond of the day for a given request type.
@@ -878,6 +888,8 @@ class ThetaClient:
         :param root:           The root / underlying / ticker / symbol.
         :param date_range:     The dates to fetch.
         :param ms_of_day:      The time of day in milliseconds.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -888,7 +900,7 @@ class ThetaClient:
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
 
-        url = f"http://127.0.0.1:25510/at_time/stock/{req_fmt}"
+        url = f"http://{host}:{port}/at_time/stock/{req_fmt}"
         querystring = {"root": root_fmt, "start_date": start_fmt,
                        "end_date": end_fmt, "ivl": ms_of_day}
         response = requests.get(url, params=querystring)
@@ -943,6 +955,8 @@ class ThetaClient:
             date_range: DateRange,
             interval_size: int = 0,
             use_rth: bool = True,
+            host: str = "127.0.0.1",
+            port: str = "25510"
     ) -> pd.DataFrame:
         """
          Get historical stock data.
@@ -952,6 +966,8 @@ class ThetaClient:
         :param date_range:     The dates to fetch.
         :param interval_size:  The interval size in milliseconds. Applicable only to OHLC & QUOTE requests.
         :param use_rth:         If true, timestamps prior to 09:30 EST and after 16:00 EST will be ignored.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -962,7 +978,7 @@ class ThetaClient:
         start_fmt = _format_date(date_range.start)
         end_fmt = _format_date(date_range.end)
         use_rth_fmt = str(use_rth).lower()
-        url = f"http://127.0.0.1:25510/hist/stock/{req_fmt}"
+        url = f"http://{host}:{port}/hist/stock/{req_fmt}"
         params = {"root": root, "start_date": start_fmt, "end_date": end_fmt,
                       "ivl": interval_size, "rth": use_rth_fmt}
         response = requests.get(url, params=params)
@@ -989,12 +1005,14 @@ class ThetaClient:
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
 
-    def get_dates_stk_REST(self, root: str, req: StockReqType) -> pd.Series:
+    def get_dates_stk_REST(self, root: str, req: StockReqType, host: str = "127.0.0.1", port: str = "25510") -> pd.Series:
         """
         Get all dates of data available for a given stock contract and request type.
 
         :param req:            The request type.
         :param root:           The root / underlying / ticker / symbol.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               dAll dates that Theta Data provides data for given a request.
         :raises ResponseError: If the request failed.
@@ -1002,7 +1020,7 @@ class ThetaClient:
         """
         root_fmt = root.lower()
         req_fmt = req.name.lower()
-        url = f"http://127.0.0.1:25510/list/dates/stock/{req_fmt}"
+        url = f"http://{host}:{port}/list/dates/stock/{req_fmt}"
         params = {'root': root_fmt}
         response = requests.get(url, params=params)
         series = parse_list_REST(response, dates=True)
@@ -1043,7 +1061,9 @@ class ThetaClient:
             root: str,
             exp: date,
             strike: float,
-            right: OptionRight) -> pd.Series:
+            right: OptionRight,
+            host: str = "127.0.0.1",
+            port: str = "25510") -> pd.Series:
         """
         Get all dates of data available for a given options contract and request type.
 
@@ -1052,6 +1072,8 @@ class ThetaClient:
         :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in USD.
         :param right:          The right of an options.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               All dates that Theta Data provides data for given a request.
         :raises ResponseError: If the request failed.
@@ -1062,7 +1084,7 @@ class ThetaClient:
         strike_fmt = _format_strike(strike)
         right = right.value
         sec = SecType.OPTION.value.lower()
-        url = f"http://127.0.0.1:25510/list/dates/{sec}/{req}"
+        url = f"http://{host}:{port}/list/dates/{sec}/{req}"
         params = {'root': root, 'exp': exp_fmt, 'strike': strike_fmt, 'right': right}
         response = requests.get(url, params=params)
         df = parse_list_REST(response, dates=True)
@@ -1096,7 +1118,9 @@ class ThetaClient:
             self,
             req: OptionReqType,
             root: str,
-            exp: date) -> pd.Series:
+            exp: date,
+            host: str = "127.0.0.1",
+            port: str = "25510") -> pd.Series:
         """
         Get all dates of data available for a given options contract and request type.
 
@@ -1105,6 +1129,8 @@ class ThetaClient:
         :param exp:            The expiration date. Must be after the start of `date_range`.
         :param strike:         The strike price in USD.
         :param right:          The right of an options.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               All dates that Theta Data provides data for given a request.
         :raises ResponseError: If the request failed.
@@ -1113,7 +1139,7 @@ class ThetaClient:
         req = req.name.lower()
         exp_fmt = _format_date(exp)
         sec = SecType.OPTION.value.lower()
-        url = f"http://127.0.0.1:25510/list/dates/{sec}/{req}"
+        url = f"http://{host}:{port}/list/dates/{sec}/{req}"
         params = {'root': root, 'exp': exp_fmt}
         response = requests.get(url, params=params)
         df = parse_list_REST(response, dates=True)
@@ -1136,17 +1162,19 @@ class ThetaClient:
         body = ListBody.parse(out, header, self._recv(header.size), dates=True)
         return body.lst
 
-    def get_expirations_REST(self, root: str) -> pd.Series:
+    def get_expirations_REST(self, root: str, host: str = "127.0.0.1", port: str = "25510") -> pd.Series:
         """
         Get all options expirations for a provided underlying root.
 
         :param root:           The root / underlying / ticker / symbol.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               All expirations that ThetaData provides data for.
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        url = "http://127.0.0.1:25510/list/expirations"
+        url = f"http://{host}:{port}/list/expirations"
         params = {"root": root}
         response = requests.get(url, params=params)
         df = parse_list_REST(response)
@@ -1188,7 +1216,7 @@ class ThetaClient:
         return s
 
 
-    def get_strikes_REST(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
+    def get_strikes_REST(self, root: str, exp: date, date_range: DateRange = None, host: str = "127.0.0.1", port: str = "25510") -> pd.Series:
         """
         Get all options strike prices in US tenths of a cent.
 
@@ -1196,6 +1224,8 @@ class ThetaClient:
         :param exp:            The expiration date.
         :param date_range:     If specified, this function will return strikes only if they have data for every
                                 day in the date range.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The strike prices on the expiration.
         :raises ResponseError: If the request failed.
@@ -1210,7 +1240,7 @@ class ThetaClient:
             querystring = {"root": root_fmt, "exp": exp_fmt}
         else:
             querystring = {"root": root_fmt, "exp": exp_fmt}
-        url = "http://127.0.0.1:25510/list/strikes"
+        url = f"http://{host}:{port}/list/strikes"
         response = requests.get(url, params=querystring)
         ser = parse_list_REST(response)
         ser = ser.divide(1000)
@@ -1233,17 +1263,19 @@ class ThetaClient:
         body = ListBody.parse(out, header, self._recv(header.size))
         return body.lst
 
-    def get_roots_REST(self, sec: SecType) -> pd.Series:
+    def get_roots_REST(self, sec: SecType, host: str = "127.0.0.1", port: str = "25510") -> pd.Series:
         """
         Get all roots for a certain security type.
 
         :param sec: The type of security.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return: All roots / underlyings / tickers / symbols for the security type.
         :raises ResponseError: If the request failed.
         :raises NoData:        If there is no data available for the request.
         """
-        url = "http://127.0.0.1:25510/list/roots"
+        url = f"http://{host}:{port}/list/roots"
         params = {'sec': sec.value}
         response = requests.get(url, params=params)
         df = parse_list_REST(response)
@@ -1295,6 +1327,8 @@ class ThetaClient:
         exp: date,
         strike: float,
         right: OptionRight,
+        host: str = "127.0.0.1",
+        port: str = "25510"
     ) -> pd.DataFrame:
         """
         Get the most recent options tick.
@@ -1304,6 +1338,8 @@ class ThetaClient:
         :param exp:            The expiration date.
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an options.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -1315,7 +1351,7 @@ class ThetaClient:
         strike_fmt = _format_strike(strike)
         exp_fmt = _format_date(exp)
 
-        url = f"http://127.0.0.1:25510/snapshot/option/{req_fmt}"
+        url = f"http://{host}:{port}/snapshot/option/{req_fmt}"
         querystring = {"root": root_fmt, "strike": strike_fmt, "exp": exp_fmt, "right": right_fmt}
         response = requests.get(url, params=querystring)
         df = parse_flexible_REST(response)
@@ -1353,6 +1389,8 @@ class ThetaClient:
         self,
         req: StockReqType,
         root: str,
+        host: str = "127.0.0.1",
+        port: str = "25510"
     ) -> pd.DataFrame:
         """
         Get the most recent options tick.
@@ -1362,6 +1400,8 @@ class ThetaClient:
         :param exp:            The expiration date.
         :param strike:         The strike price in USD, rounded to 1/10th of a cent.
         :param right:          The right of an options.
+        :param host:           The ip address of the server
+        :param port:           The port of the server
 
         :return:               The requested data as a pandas DataFrame.
         :raises ResponseError: If the request failed.
@@ -1370,7 +1410,7 @@ class ThetaClient:
         root_fmt = root.lower()
         req_fmt = req.name.lower()
 
-        url = f"http://127.0.0.1:25510/snapshot/option/{req_fmt}"
+        url = f"http://{host}:{port}/snapshot/option/{req_fmt}"
         querystring = {"root": root_fmt}
         response = requests.get(url, params=querystring)
         df = parse_flexible_REST(response)
