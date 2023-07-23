@@ -507,7 +507,7 @@ recommend using a `date_range` of 2 weeks or fewer for tick-level option request
 === "quote.py"
 
     ```python
-    --8<-- "docs/stocks/quote_1min.py"
+    --8<-- "docs/options/quote_tick.py"
     ```
 
 === "Output"
