@@ -1177,7 +1177,7 @@ class ThetaClient:
         url = f"http://{host}:{port}/list/expirations"
         params = {"root": root}
         response = requests.get(url, params=params)
-        df = parse_list_REST(response)
+        df = parse_list_REST(response, dates=True)
         return df
 
     def get_strikes(self, root: str, exp: date, date_range: DateRange = None,) -> pd.Series:
