@@ -742,8 +742,7 @@ class ThetaClient:
         t2 = time.time()
         df = parse_flexible_REST(response)
         t3 = time.time()
-        print(f'time for request.get: {t2-t1}')
-        print(f'time for parse_flexible_REST(): {t3-t2}')
+
         return df
 
     def get_opt_at_time(
