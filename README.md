@@ -1,3 +1,7 @@
+# This API is no longer officially supported! Please use the REST API!
+
+For more features, better stability, and performance, please use our [REST API](https://http-docs.thetadata.us), which can be used in any language including Python.
+
 # Thetadata Python API
 
 The [Thetadata](https://thetadata.net) Python API provides low latency US equities & options data that may be used for
