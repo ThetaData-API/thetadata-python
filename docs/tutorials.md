@@ -2,7 +2,7 @@
 
 
 Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
-as it has better performance, more features, and better documentation. Our 
+as it has better performance, more features, and more thorough documentation. Our 
 [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
 any language including Python. Each 
 [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
