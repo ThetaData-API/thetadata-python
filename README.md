@@ -1,4 +1,47 @@
-# Thetadata Python API
+# This API is deprecated, use our REST API!
+
+
+Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+as it has better performance, more features, and better documentation. Our 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
+any language including Python. Each 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+endpoint comes with Python [sample code](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/g81mc75m2rbp0-sample-code-and-data).
+
+# This API is deprecated, use our REST API!
+
+
+Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+as it has better performance, more features, and better documentation. Our 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
+any language including Python. Each 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+endpoint comes with Python [sample code](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/g81mc75m2rbp0-sample-code-and-data).
+
+# This API is deprecated, use our REST API!
+
+
+Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+as it has better performance, more features, and better documentation. Our 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
+any language including Python. Each 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+endpoint comes with Python [sample code](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/g81mc75m2rbp0-sample-code-and-data).
+
+
+# This API is deprecated, use our REST API!
+
+
+Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+as it has better performance, more features, and better documentation. Our 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
+any language including Python. Each 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+endpoint comes with Python [sample code](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/g81mc75m2rbp0-sample-code-and-data).
+
+
+
+## Thetadata Python API
 
 The [Thetadata](https://thetadata.net) Python API provides low latency US equities & options data that may be used for
 market research or algorithmic trading applications.
@@ -13,7 +56,3 @@ Java 11 or higher is required. If you are on Windows, Java 19 will automatically
 
 Please see our [official installation instructions](https://thetadata-api.github.io/thetadata-python/tutorials/#installation)
 to get started.
-
-## Contributing
-
-We welcome all feedback, whether it comes in the form of Github issues, pull requests, or pings in our [Discord](https://discord.thetadata.us)!

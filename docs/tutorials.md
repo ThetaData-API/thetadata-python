@@ -1,3 +1,17 @@
+# This API is deprecated, use our REST API!
+
+
+Please use our [REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+as it has better performance, more features, and better documentation. Our 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started) can be used in
+any language including Python. Each 
+[REST API](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/4g9ms9h4009k0-getting-started)
+endpoint comes with Python [sample code](https://http-docs.thetadata.us/docs/theta-data-rest-api-v2/g81mc75m2rbp0-sample-code-and-data).
+
+
+
+
+
 # Quickstart
 
 In this section you'll learn how to get started with thetadata and make simple requests.
